@@ -1,0 +1,1 @@
+web: node node_modules/.bin/lessc less/charted.less pub/charted.css && node index.js

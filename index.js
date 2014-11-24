@@ -4,7 +4,7 @@ var request = require('request')
 var express = require('express')
 var app = express()
 
-app.get('/get', function (req, res) {
+function fetchResource(req, res) {
   if (!req.query.url) {
     res.status(400).send('Bad Request: no url provided')
     return
@@ -22,14 +22,13 @@ app.get('/get', function (req, res) {
     }
 
     res.status(200).send(body)
-  })
-})
+  })  
+}
 
-app.use(express.static('pub'))
+app.set('port', (process.env.PORT || 5000))
+app.get('/get', fetchResource)
+app.use(express.static(__dirname + '/pub'))
 
-var server = app.listen(3000, function () {
-  var host = server.address().address
-  var port = server.address().port
-
-  console.log('Running at http://%s:%s', host, port)
+app.listen(app.get('port'), function () {
+  console.log('Running at localhost:', app.get('port'))
 })
