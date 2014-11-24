@@ -1,3 +1,4 @@
 node_modules/
 pub/charted.css
+pub/charted.js
 npm-debug.log

@@ -24,7 +24,8 @@
     "less": "1.7.x",
     "express": "4.10.x",
     "jshint": "2.5.x",
-    "request": "2.47.x"
+    "request": "2.47.x",
+    "uglify-js": "2.4.x"
   },
   "homepage": "https://github.com/Medium/charted"
 }
