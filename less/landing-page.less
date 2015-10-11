@@ -129,16 +129,18 @@ footer a:hover{
 #carbonads {
   display: block;
   overflow: hidden;
-  font-family: Verdana, "Helvetica Neue", Helvetica, sans-serif;
-  font-size: @fontSize-smallest;
+  font-size: @fontSize-smaller;
   line-height: @lineHeight-base;
-  width: 412px;
+  width: 320px;
   margin: 0px auto;
-  padding: 40px 0 0 92px;
+  padding: 40px 0 0;
 }
 #carbonads a {
   color: @gray-dark;
   text-decoration: none;
+}
+#carbonads a:before {
+  display: none;
 }
 #carbonads a:hover{
   color: @gray-darker;
@@ -149,7 +151,7 @@ footer a:hover{
 }
 .carbon-wrap {
   padding: 10px;
-  border: solid 1px #ddd;
+  border: solid 1px @gray-light;
   border-radius: 3px;
 }
 .carbon-text {
@@ -164,7 +166,7 @@ footer a:hover{
 }
 .carbon-poweredby {
   display: block;
-  font-size: 9px;
+  font-size: 10px;
   text-transform: uppercase;
   text-align: right;
   padding-right: 3px;
@@ -220,9 +222,9 @@ footer a:hover{
   }
 }
 
-@media screen and (min-height: @height-tablet) {
+@media screen and (min-height: 600px) {
   .load-data-form{
-    top: 200px;
+    bottom: 62%;
     left: 0;
     margin-bottom: -30px;
     margin-top: 0;
@@ -235,7 +237,7 @@ footer a:hover{
   }
 }
 
-@media screen and (min-width: @width-tablet) and (min-height: @height-tablet) {
+@media screen and (min-width: @width-tablet) and (min-height: 600px) {
   .load-data-form{
     margin-bottom: -55px;
   }
