@@ -49,7 +49,7 @@
 .data-file-input::-moz-placeholder{
   color: @gray-light;
 }
-.data-file-input:-ms-input-placeholder {  
+.data-file-input:-ms-input-placeholder {
   color: @gray-light;
 }
 .data-file-input::light {
@@ -112,7 +112,7 @@ footer{
   text-align: center;
   width: 100%;
 }
-footer a{
+footer a {
   color: @gray-dark;
   text-decoration: none;
 }
@@ -125,6 +125,50 @@ footer a:hover{
   color: @gray-darker;
 }
 
+/** Carbon Ads */
+#carbonads {
+  display: block;
+  overflow: hidden;
+  font-family: Verdana, "Helvetica Neue", Helvetica, sans-serif;
+  font-size: @fontSize-smallest;
+  line-height: @lineHeight-base;
+  width: 412px;
+  margin: 0px auto;
+  padding: 40px 0 0 92px;
+}
+#carbonads a {
+  color: @gray-dark;
+  text-decoration: none;
+}
+#carbonads a:hover{
+  color: @gray-darker;
+}
+#carbonads span {
+  display: block;
+  overflow: hidden;
+}
+.carbon-wrap {
+  padding: 10px;
+  border: solid 1px #ddd;
+  border-radius: 3px;
+}
+.carbon-text {
+  display: block;
+  float: left;
+  max-width: 50%;
+  text-align: left;
+}
+.carbon-img {
+  float: left;
+  margin-right: 1em;
+}
+.carbon-poweredby {
+  display: block;
+  font-size: 9px;
+  text-transform: uppercase;
+  text-align: right;
+  padding-right: 3px;
+}
 
 @media screen and (min-width: @width-tablet) {
   .page-title{
@@ -178,7 +222,7 @@ footer a:hover{
 
 @media screen and (min-height: @height-tablet) {
   .load-data-form{
-    bottom: 50%;
+    top: 200px;
     left: 0;
     margin-bottom: -30px;
     margin-top: 0;
@@ -194,5 +238,12 @@ footer a:hover{
 @media screen and (min-width: @width-tablet) and (min-height: @height-tablet) {
   .load-data-form{
     margin-bottom: -55px;
+  }
+}
+
+@media screen and (max-width: @width-netbook) {
+  #carbonads {
+    width: 372px;
+    padding: 40px 0 0 0px;
   }
 }
