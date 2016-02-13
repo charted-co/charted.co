@@ -1,31 +1,24 @@
 {
-  "name": "charted",
-  "version": "0.1.1",
-  "description": "A charting library from Medium",
+  "name": "charted-co",
+  "version": "2.0.0",
+  "description": "charted.co",
   "main": "index.js",
   "scripts": {
-    "prestart": "lessc less/charted.less pub/charted.css",
-    "start": "node index.js",
-    "test": "jshint index.js && jshint pub/scripts/*.js && echo 'Lint OK'"
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=4.1.1"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:mikesall/charted.git"
+    "url": "https://github.com/valueof/charted-co"
   },
-  "keywords": [
-    "charts"
-  ],
-  "author": "Mike Sall <mike@medium.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/mikesall/charted/issues"
-  },
+  "license": "LicenseRef-LICENSE",
   "dependencies": {
-    "less": "1.7.x",
-    "express": "4.10.x",
-    "jshint": "2.5.x",
-    "request": "2.47.x",
-    "uglify-js": "2.4.x"
-  },
-  "homepage": "http://www.charted.co/"
+    "body-parser": "^1.15.0",
+    "connect": "^3.4.1",
+    "express": "^4.13.4",
+    "redis": "^2.4.2",
+    "request": "^2.69.0"
+  }
 }

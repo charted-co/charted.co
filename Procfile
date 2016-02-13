@@ -1,1 +1,1 @@
-web: ./deploy.sh
+web: node index.js
