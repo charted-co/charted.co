@@ -79,7 +79,9 @@ define(["exports", "../shared/utils", "./PageData"], function (exports, _utils, 
     }, {
       key: "getFlattenedData",
       value: function getFlattenedData() {
-        return _.flatten(this._data);
+        return this._data.reduce(function (a, b) {
+          return a.concat(b);
+        });
       }
     }, {
       key: "getSerieses",
@@ -143,7 +145,9 @@ define(["exports", "../shared/utils", "./PageData"], function (exports, _utils, 
     }, {
       key: "getSeriesExtent",
       value: function getSeriesExtent(seriesIndex) {
-        var yRawValues = _.pluck(this._data[seriesIndex], 'yRaw');
+        var yRawValues = this._data[seriesIndex].map(function (item) {
+          return item.yRaw;
+        });
 
         return (0, _utils.getTrimmedExtent)(yRawValues);
       }

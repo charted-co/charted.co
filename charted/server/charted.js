@@ -110,7 +110,7 @@ var ChartedServer = function () {
 
       if (req.query.url) {
         var _ret = function () {
-          var parsed = _url2.default.parse(req.query.url, true);
+          var parsed = _url2.default.parse(req.query.url, /* parse query string */true);
           var chartUrl = _url2.default.format((0, _prepare2.default)(parsed));
           var params = { dataUrl: chartUrl };
 

@@ -11,7 +11,15 @@
     <script src="//use.edgefonts.net/source-sans-pro:n2,n4,n9.js"></script>
 
       <script src="/lib.js"></script>
-      <script src="/charted.js" data-main="/scripts/charted"></script>
+      <script src="/charted.js"></script>
+      <script>
+        requirejs(['scripts/PageController'], function (module) {
+          $(function () {
+            var pageController = new module.PageController()
+            pageController.activate()
+          })
+        })
+      </script>
 
     <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

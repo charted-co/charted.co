@@ -502,9 +502,13 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
             isValid: isValid
           };
         });
-        currentY = _.min(diffs.filter(function (diff) {
+        diffs = diffs.filter(function (diff) {
           return diff.isValid;
-        }), 'diff').series;
+        });
+        diffs.sort(function (a, b) {
+          return d3.ascending(a.diff, b.diff);
+        });
+        currentY = diffs.length ? diffs[0].series : 0;
 
         if (this.params.type === 'column') {
           var yValueExtent = this.data.getStackedExtentForIndex(currentX);

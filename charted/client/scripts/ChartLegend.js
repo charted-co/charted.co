@@ -73,27 +73,25 @@ define(["exports", "./Chart", "./ChartData", "./PageController", "./templates"],
     _createClass(ChartLegend, [{
       key: "update",
       value: function update() {
-        var _this = this;
-
         if (this.data.getSeriesCount() === 1 && this.controller.getOtherCharts(this.chartIndex).length === 0) {
           this.$container.find('.legend').html('');
           return;
         }
 
         var $legend = $('');
+        var serieses = this.data.getSerieses();
 
-        _.eachRight(this.data.getSerieses(), function (series, i) {
-          var label = _this.controller.getSeriesName(_this.series[i]);
-
-          var thisLabel = {
+        for (var i = serieses.length - 1; i >= 0; i--) {
+          var series = serieses[i];
+          var label = this.controller.getSeriesName(this.series[i]);
+          var $legendEl = $(templates.legendItem({
             label: label,
-            color: _this.chart.getSeriesColor(series.seriesIndex),
-            editable: _this.controller.getEditability()
-          };
-          var $legendEl = $(templates.legendItem(thisLabel));
+            color: this.chart.getSeriesColor(series.seriesIndex),
+            editable: this.controller.getEditability()
+          }));
           $legend = $legend.add($legendEl);
           series.legendEl = $legendEl;
-        });
+        }
 
         this.$container.find('.legend').html($legend).removeClass('hidden');
 
@@ -104,12 +102,12 @@ define(["exports", "./Chart", "./ChartData", "./PageController", "./templates"],
     }, {
       key: "bindLegendInteractions",
       value: function bindLegendInteractions() {
-        var _this2 = this;
+        var _this = this;
 
         this.data.getSerieses().forEach(function (series, i) {
           var $legendInput = series.legendEl.find('.legend-input');
           $legendInput.on('focusout', function () {
-            var seriesNames = _this2.controller.params.seriesNames;
+            var seriesNames = _this.controller.params.seriesNames;
 
             if ($legendInput.text() === series.label || $legendInput.text() === '') {
               $legendInput.text(series.label);
@@ -118,31 +116,31 @@ define(["exports", "./Chart", "./ChartData", "./PageController", "./templates"],
               seriesNames[series.seriesIndex] = $legendInput.text();
             }
 
-            _this2.controller.updateURL();
+            _this.controller.updateURL();
           });
           series.legendEl.find('.legend-color').click(function (event) {
             event.stopPropagation();
 
-            _this2.removePopovers();
+            _this.removePopovers();
 
-            _this2.openColorInput(series);
+            _this.openColorInput(series);
           });
           series.legendEl.find('.move-chart').click(function (event) {
             event.stopPropagation();
 
-            _this2.removePopovers();
+            _this.removePopovers();
 
-            _this2.openMoveChart(series, i);
+            _this.openMoveChart(series, i);
           });
         });
         $('html').click(function () {
-          return _this2.removePopovers();
+          return _this.removePopovers();
         });
       }
     }, {
       key: "openColorInput",
       value: function openColorInput(series) {
-        var _this3 = this;
+        var _this2 = this;
 
         var colorHex = this.chart.getSeriesColor(series.seriesIndex).replace(/^#/, '');
         series.legendEl.addClass('active-color-input');
@@ -151,13 +149,13 @@ define(["exports", "./Chart", "./ChartData", "./PageController", "./templates"],
           seriesIndex: series.seriesIndex
         }));
         this.data.getSeriesIndices().forEach(function (series) {
-          var $thisColorInput = _this3.$container.find('.change-series-color-' + series);
+          var $thisColorInput = _this2.$container.find('.change-series-color-' + series);
 
           $thisColorInput.on('focusout', function () {
-            var seriesColors = _this3.controller.params.seriesColors;
+            var seriesColors = _this2.controller.params.seriesColors;
             var newColorHex = '#' + $thisColorInput.text().replace(/^#/, '').trim();
 
-            var defaultColorHex = _this3.chart.getDefaulSeriesColor(series);
+            var defaultColorHex = _this2.chart.getDefaulSeriesColor(series);
 
             var isValidHex = /(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test(newColorHex);
 
@@ -168,9 +166,9 @@ define(["exports", "./Chart", "./ChartData", "./PageController", "./templates"],
               seriesColors[series] = newColorHex;
             }
 
-            _this3.chart.render();
+            _this2.chart.render();
 
-            _this3.controller.updateURL();
+            _this2.controller.updateURL();
           });
         });
         this.$container.find('.change-series-color').click(function (e) {
@@ -180,7 +178,7 @@ define(["exports", "./Chart", "./ChartData", "./PageController", "./templates"],
     }, {
       key: "openMoveChart",
       value: function openMoveChart(series, i) {
-        var _this4 = this;
+        var _this3 = this;
 
         var otherCharts = this.controller.getOtherCharts(this.chartIndex);
         var newChartIndex = otherCharts.length + 1;
@@ -196,14 +194,14 @@ define(["exports", "./Chart", "./ChartData", "./PageController", "./templates"],
             series: this.series
           }));
           otherCharts.forEach(function (chart) {
-            _this4.$container.find('.move-to-chart-' + chart.chartIndex).click(function (e) {
+            _this3.$container.find('.move-to-chart-' + chart.chartIndex).click(function (e) {
               e.preventDefault();
 
-              _this4.controller.moveToChart(_this4.series[i], _this4.chartIndex, chart.chartIndex);
+              _this3.controller.moveToChart(_this3.series[i], _this3.chartIndex, chart.chartIndex);
             });
           });
           this.$container.find('.move-to-new-chart').click(function () {
-            _this4.controller.moveToChart(_this4.series[i], _this4.chartIndex, newChartIndex);
+            _this3.controller.moveToChart(_this3.series[i], _this3.chartIndex, newChartIndex);
           });
         }
       }
