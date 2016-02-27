@@ -119,21 +119,37 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
 
         var path = /\/(c|embed)\/([a-z\d]{7})\/?$/.exec(window.location.pathname);
         var chartId = path && path[2];
+        var legacyParams = _ChartParameters2.default.fromQueryString(window.location.search || '');
 
-        if (!chartId) {
+        if (!chartId && !legacyParams) {
           this.clearExisting();
           this.$body.addClass('pre-load');
           return;
         }
 
-        this.isEmbed = path[1] == 'embed';
-        this.fetchPageData( /* url */null, chartId);
+        this.isEmbed = path && path[1] == 'embed';
 
         // If it's not an embed, refresh every 30 minutes (1000 * 60 * 30)
         if (!this.isEmbed) {
           setInterval(function () {
-            return _this2.fetchPageData( /* url */null, chartId);
+            return _this2.fetchPageData();
           }, MIN_30);
+        }
+
+        if (chartId) {
+          this.fetchPageData( /* url */null, chartId);
+          return;
+        }
+
+        // We need to convert legacy params by saving them into the database and
+        // then fetch data.
+        if (legacyParams) {
+          this.params = legacyParams.withDefaultTitle(function (i) {
+            return _this2.getDefaultTitle(i);
+          });
+          this.updateURL( /* withoutServerUpdate */false, function () {
+            return _this2.fetchPageData();
+          });
         }
       }
 
@@ -146,6 +162,16 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
       value: function fetchPageData(dataUrl, id) {
         var _this3 = this;
 
+        if (!dataUrl && !id) {
+          if (!this.params) {
+            return;
+          }
+
+          // If neither dataUrl nor id is provided but there is an
+          // active chart, we simply refetch that chart.
+          id = utils.getChartId(this.params.compress());
+        }
+
         this.$body.addClass('loading');
         this.updatePageTitle('Charted (...)');
         this.clearExisting();
@@ -157,7 +183,7 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
             return;
           }
 
-          _this3.params = new _ChartParameters2.default.fromJSON(resp.params).withDefaultTitle(function (i) {
+          _this3.params = _ChartParameters2.default.fromJSON(resp.params).withDefaultTitle(function (i) {
             return _this3.getDefaultTitle(i);
           });
           _this3.data = new _PageData2.default.fromJSON(_this3.params.url, resp.data);
@@ -433,7 +459,7 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
         this.$body.toggleClass('full');
 
         var template = templates.gridSettingsFull;
-        if (this.params.isFull()) {
+        if (this.params && this.params.isFull()) {
           template = templates.gridSettingsSplit;
         }
 
@@ -554,6 +580,7 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
       key: "updateURL",
       value: function updateURL() {
         var withoutServerUpdate = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
+        var cb = arguments[1];
 
         this.updatePageTitle();
         var params = this.params.compress();
@@ -562,7 +589,9 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
         window.history.pushState({}, null, path);
 
         if (!withoutServerUpdate) {
-          d3.xhr(path).header('Content-Type', 'application/json').post(JSON.stringify(params));
+          d3.xhr(path).header('Content-Type', 'application/json').post(JSON.stringify(params), function () {
+            if (cb) cb();
+          });
           // TODO (anton): Show an error if save failed
         }
       }
