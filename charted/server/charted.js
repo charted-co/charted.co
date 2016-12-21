@@ -70,21 +70,11 @@ var ChartedServer = function () {
 
         app.use(_bodyParser2.default.json());
         app.use(_express2.default.static(staticRoot));
-        app.get('/c/:id', function (req, res) {
-          return charted.getChart(req, res);
-        });
-        app.get('/embed/:id', function (req, res) {
-          return charted.getChart(req, res);
-        });
-        app.post('/c/:id', function (req, res) {
-          return charted.saveChart(req, res);
-        });
-        app.get('/load', function (req, res) {
-          return charted.loadChart(req, res);
-        });
-        app.get('/oembed', function (req, res) {
-          return charted.getOembed(req, res);
-        });
+        app.get('/c/:id', charted.getChart.bind(charted));
+        app.get('/embed/:id', charted.getChart.bind(charted));
+        app.post('/c/:id', charted.saveChart.bind(charted));
+        app.get('/load', charted.loadChart.bind(charted));
+        app.get('/oembed', charted.getOembed.bind(charted));
 
         var server = app.listen(port, function () {
           charted.address = server.address();
@@ -172,7 +162,7 @@ var ChartedServer = function () {
 
       this.store.set(id, req.body);
       res.setHeader('Content-Type', 'application/json');
-      res.statusCode = 200;
+      res.status(200);
       res.end(JSON.stringify({ status: 'ok' }));
     }
   }, {
@@ -202,7 +192,7 @@ var ChartedServer = function () {
         }
 
         res.setHeader('Content-Type', 'application/json');
-        res.statusCode = 200;
+        res.status(200);
 
         res.end(JSON.stringify({
           type: 'rich',
@@ -231,20 +221,20 @@ var ChartedServer = function () {
         }
 
         res.setHeader('Content-Type', 'application/json');
-        res.statusCode = 200;
+        res.status(200);
         res.end(JSON.stringify({ params: params, data: body }));
       });
     }
   }, {
     key: "notFound",
     value: function notFound(res, message) {
-      res.statusCode = 404;
+      res.status(404);
       res.end("Not Found: " + message);
     }
   }, {
     key: "badRequest",
     value: function badRequest(res, message) {
-      res.statusCode = 400;
+      res.status(400);
       res.end("Bad Request: " + message);
     }
   }]);

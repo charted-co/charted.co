@@ -25,7 +25,7 @@ define(['exports', './ChartParameters'], function (exports, _ChartParameters) {
     var params = new _ChartParameters2.default('http://charted.co/data.csv');
     test.equal(params.url, 'http://charted.co/data.csv');
     test.ok(params.isLight());
-    test.ok(params.isFull());
+    test.ok(!params.isFull());
     test.equal(1, params.charts.length);
     test.done();
   }
@@ -52,9 +52,9 @@ define(['exports', './ChartParameters'], function (exports, _ChartParameters) {
 
   function testToggleGrid(test) {
     var params = new _ChartParameters2.default('http://charted.co');
-    test.ok(params.isFull());
-    params.toggleGrid();
     test.ok(!params.isFull());
+    params.toggleGrid();
+    test.ok(params.isFull());
     test.done();
   }
 
@@ -115,7 +115,7 @@ define(['exports', './ChartParameters'], function (exports, _ChartParameters) {
         1: '#fff'
       },
       color: 'dark',
-      grid: 'split'
+      grid: 'full'
     });
     params.charts = [{
       title: 'my title',
@@ -130,7 +130,7 @@ define(['exports', './ChartParameters'], function (exports, _ChartParameters) {
         1: '#fff'
       },
       color: 'dark',
-      grid: 'split',
+      grid: 'full',
       charts: [{
         title: 'my title',
         note: 'my note'
@@ -155,7 +155,7 @@ define(['exports', './ChartParameters'], function (exports, _ChartParameters) {
         1: '#fff'
       },
       color: 'dark',
-      grid: 'split',
+      grid: 'full',
       charts: [{
         title: 'chart 1'
       }, {

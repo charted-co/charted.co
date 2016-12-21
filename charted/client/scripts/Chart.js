@@ -1,6 +1,6 @@
 "use strict";
 
-define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageController", "./PageData", "./templates"], function (exports, _ChartData, _ChartLegend, _utils, _PageController, _PageData, _templates) {
+define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageController", "./PageData", "./Editor", "./templates"], function (exports, _ChartData, _ChartLegend, _utils, _PageController, _PageData, _Editor, _templates) {
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
@@ -10,6 +10,8 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
   var _ChartLegend2 = _interopRequireDefault(_ChartLegend);
 
   var _PageData2 = _interopRequireDefault(_PageData);
+
+  var _Editor2 = _interopRequireDefault(_Editor);
 
   var templates = _interopRequireWildcard(_templates);
 
@@ -62,6 +64,8 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
 
   var Chart = function () {
     function Chart(pageController, chartIndex, $wrapper, params, data) {
+      var _this2 = this;
+
       _classCallCheck(this, Chart);
 
       this.pageController = pageController;
@@ -83,6 +87,26 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
       this.$optionsElem = this.$container.find('.chart-options');
       this.$pageSettings = $('.page-settings');
       this.$chartDescription = this.$container.find('.chart-description');
+      this.titleEditor = new _Editor2.default(this.$container.find('.js-chartTitle').get(0));
+      this.titleEditor.onChange(function (content) {
+        if (!content) {
+          _this2.params.title = _this2.pageController.getDefaultTitle(_this2.chartIndex);
+
+          _this2.titleEditor.setContent(_this2.params.title);
+
+          return;
+        }
+
+        _this2.params.title = content;
+
+        _this2.pageController.updateURL();
+      });
+      this.noteEditor = new _Editor2.default(this.$container.find('.js-chartNote').get(0));
+      this.noteEditor.onChange(function (content) {
+        _this2.params.note = content;
+
+        _this2.pageController.updateURL();
+      });
       this.refresh(chartIndex, params, data);
       this.bindInteractions();
     }
@@ -100,16 +124,9 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
     }, {
       key: "setupChart",
       value: function setupChart() {
-        var _this2 = this;
-
         this.$plot.empty();
-
-        _PageController.EDITABLES.forEach(function (item) {
-          _this2.$container.find('.' + (0, _utils.camelToHyphen)(item)).text(_this2.params[item]);
-
-          _this2.updateEditablePlaceholder(item);
-        });
-
+        this.titleEditor.setContent(this.params.title);
+        this.noteEditor.setContent(this.params.note);
         this.$xBeg.html(this.data.getIndexExtent()[0]);
         this.$xEnd.html(this.data.getIndexExtent()[1]);
         this.setScales();
@@ -417,24 +434,6 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
             _this5.pageController.updateURL();
           });
         });
-
-        _PageController.EDITABLES.forEach(function (item) {
-          var $elem = _this5.$container.find('.' + (0, _utils.camelToHyphen)(item));
-
-          $elem.on('focusout', function () {
-            if ($elem.text() === '' && item === 'title') {
-              _this5.params[item] = _this5.pageController.getDefaultTitle(_this5.chartIndex);
-              $elem.text(_this5.params[item]);
-            } else {
-              _this5.params[item] = $elem.text();
-
-              _this5.updateEditablePlaceholder(item);
-            }
-
-            _this5.pageController.updateURL();
-          });
-        });
-
         this.$container.mousemove(function (pixel) {
           return _this5.handleMouseover(pixel);
         });
@@ -534,15 +533,6 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
           d3.select(selectedLine.node().parentNode).each(function () {
             this.parentNode.appendChild(this);
           });
-        }
-      }
-    }, {
-      key: "updateEditablePlaceholder",
-      value: function updateEditablePlaceholder(item) {
-        if (!this.params[item] || this.params[item] === '') {
-          this.$container.find('.' + (0, _utils.camelToHyphen)(item)).addClass('empty');
-        } else {
-          this.$container.find('.' + (0, _utils.camelToHyphen)(item)).removeClass('empty');
         }
       }
     }, {

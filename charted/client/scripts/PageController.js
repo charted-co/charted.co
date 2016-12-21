@@ -4,7 +4,7 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.PageController = exports.OPTIONS = exports.EDITABLES = undefined;
+  exports.PageController = exports.OPTIONS = undefined;
 
   var _PageData2 = _interopRequireDefault(_PageData);
 
@@ -64,7 +64,6 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
   }();
 
   var MIN_30 = 1000 * 60 * 30;
-  var EDITABLES = exports.EDITABLES = ['title', 'note'];
   var OPTIONS = exports.OPTIONS = {
     // Default values are first
     type: ['column', 'line'],

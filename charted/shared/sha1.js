@@ -135,6 +135,6 @@ function toHexStr(n) {
  * Encode utf8 multi-byte string to utf8
  */
 function utf8Encode(str) {
-  // See http://monsur.hossa.in/2012/07/20/utf-8-in-javascript.html
+  // $FlowFixMe: See http://monsur.hossa.in/2012/07/20/utf-8-in-javascript.html
   return unescape(encodeURIComponent(str));
 }

@@ -1,11 +1,13 @@
 "use strict";
 
-define(["./PageData_test", "./ChartParameters_test", "../shared/sha1_test"], function (_PageData_test, _ChartParameters_test, _sha1_test) {
+define(["./PageData_test", "./ChartParameters_test", "../shared/sha1_test", "./Editor_test"], function (_PageData_test, _ChartParameters_test, _sha1_test, _Editor_test) {
   var tests_PageData = _interopRequireWildcard(_PageData_test);
 
   var tests_ChartParameters = _interopRequireWildcard(_ChartParameters_test);
 
   var tests_sha1 = _interopRequireWildcard(_sha1_test);
+
+  var tests_Editor = _interopRequireWildcard(_Editor_test);
 
   function _interopRequireWildcard(obj) {
     if (obj && obj.__esModule) {
@@ -27,6 +29,7 @@ define(["./PageData_test", "./ChartParameters_test", "../shared/sha1_test"], fun
   nodeunit.run({
     'PageData': tests_PageData,
     'ChartParameters': tests_ChartParameters,
-    'sha1': tests_sha1
+    'sha1': tests_sha1,
+    "Editor": tests_Editor
   });
 });
