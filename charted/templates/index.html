@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>Charted</title>
+
+    <meta http-equiv='Content-type' content='text/html; charset=utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="stylesheet" href="/charted.css">
+    <script src="//use.edgefonts.net/source-sans-pro:n2,n4,n9.js"></script>
+
+    {{#if ENV.dev}}
+      <script src="/lib/jquery.js"></script>
+      <script src="/lib/d3.js"></script>
+
+      <script async src="/lib/require.js" data-main="/scripts/charted"></script>
+    {{else}}
+      <script src="/lib.js"></script>
+      <script src="/charted.js"></script>
+      <script>
+        requirejs(['scripts/PageController'], function (module) {
+          $(function () {
+            var pageController = new module.PageController()
+            pageController.activate()
+          })
+        })
+      </script>
+    {{/if}}
+
+    {{!-- Render partial `head` if it's registered or fail silently --}}
+    {{#> head }}{{/head}}
+  </head>
+
+  <body class="pre-load">
+    <h1 class="page-title">
+      {{#if ENV.dev}}
+        Charted Dev
+      {{else}}
+        Charted
+      {{/if}}
+    </h1>
+    <h2 class="page-subtitle">Beautiful, automatic charts</h2>
+
+    <div class="loading-embed-spinner">
+      <img class="loading-spinner-img" src="/images/spinner-dark.svg">
+    </div>
+
+    <form class="load-data-form">
+      <input type="text" class="data-file-input" name="dataUrl"
+        value="{{dataUrl}}""
+        placeholder="Paste the link to a .csv file or Google Spreadsheet">
+
+      <button type="submit" class="submit">Go</button>
+      <div class="loading-spinner"><img class="loading-spinner-img" src="/images/spinner.svg"></div>
+      <div class="error-message"></div>
+    </form>
+
+    <div class="charts"></div>
+
+    <footer>
+      <a href="https://github.com/mikesall/charted">GitHub</a>
+      <a href="https://medium.com/p/2149df6bb0bd">How it works</a>
+      <a href='http://www.charted.co/c/46e0cd2'>Try an example</a>
+
+      {{!-- Render partial `footer` if it's registered or fail silently --}}
+      {{#> footer }}{{/footer}}
+    </footer>
+  </body>
+</html>

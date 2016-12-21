@@ -28,19 +28,26 @@ function testBasic(test) {
 }
 
 function testDropbox(test) {
-  test.equal(_url2.default.format((0, _prepare2.default)(_url2.default.parse('http://dropbox.com/s/abcdef/my.csv'))), 'http://dropbox.com/s/abcdef/my.csv?raw=1');
+  test.equal(parse('http://dropbox.com/s/abcdef/my.csv'), 'http://dropbox.com/s/abcdef/my.csv?raw=1');
 
-  test.equal(_url2.default.format((0, _prepare2.default)(_url2.default.parse('http://www.dropbox.com/s/abcdef/my.csv'))), 'http://www.dropbox.com/s/abcdef/my.csv?raw=1');
+  test.equal(parse('http://www.dropbox.com/s/abcdef/my.csv'), 'http://www.dropbox.com/s/abcdef/my.csv?raw=1');
+
+  test.equal(parse('https://www.dropbox.com/s/pbrtd50jpwlx5n8/charted-sample.csv?dl=0'), 'https://www.dropbox.com/s/pbrtd50jpwlx5n8/charted-sample.csv?dl=1');
 
   test.done();
 }
 
 function testGoogleSpreadsheets(test) {
-  test.equal(_url2.default.format((0, _prepare2.default)(_url2.default.parse('https://docs.google.com/spreadsheets/d/1N9Vpl941bR-yN_ZlMHvlc4soDrCxswsORpvjDTbKaiw/edit#gid=2090366728', true))), 'https://docs.google.com/spreadsheets/d/1N9Vpl941bR-yN_ZlMHvlc4soDrCxswsORpvjDTbKaiw/export?gid=2090366728&format=csv');
+  test.equal(parse('https://docs.google.com/spreadsheets/d/1N9Vpl941bR-yN_ZlMHvlc4soDrCxswsORpvjDTbKaiw/edit#gid=2090366728'), 'https://docs.google.com/spreadsheets/d/1N9Vpl941bR-yN_ZlMHvlc4soDrCxswsORpvjDTbKaiw/export?gid=2090366728&format=csv');
 
-  test.equal(_url2.default.format((0, _prepare2.default)(_url2.default.parse('https://docs.google.com/spreadsheets/d/1N9Vpl941bR-yN_ZlMHvlc4soDrCxswsORpvjDTbKaiw/edit', true))), 'https://docs.google.com/spreadsheets/d/1N9Vpl941bR-yN_ZlMHvlc4soDrCxswsORpvjDTbKaiw/export?gid=0&format=csv');
+  test.equal(parse('https://docs.google.com/spreadsheets/d/1N9Vpl941bR-yN_ZlMHvlc4soDrCxswsORpvjDTbKaiw/edit'), 'https://docs.google.com/spreadsheets/d/1N9Vpl941bR-yN_ZlMHvlc4soDrCxswsORpvjDTbKaiw/export?gid=0&format=csv');
 
   // https://github.com/mikesall/charted/issues/77
-  test.equal(_url2.default.format((0, _prepare2.default)(_url2.default.parse('https://docs.google.com/spreadsheets/d/1i5INeh718Hj2AiKbiRq5eRL5qiekHR9Lzvs4NjCNmtc/edit?usp=sharing', true))), 'https://docs.google.com/spreadsheets/d/1i5INeh718Hj2AiKbiRq5eRL5qiekHR9Lzvs4NjCNmtc/export?usp=sharing&gid=0&format=csv');
+  test.equal(parse('https://docs.google.com/spreadsheets/d/1i5INeh718Hj2AiKbiRq5eRL5qiekHR9Lzvs4NjCNmtc/edit?usp=sharing'), 'https://docs.google.com/spreadsheets/d/1i5INeh718Hj2AiKbiRq5eRL5qiekHR9Lzvs4NjCNmtc/export?usp=sharing&gid=0&format=csv');
+
   test.done();
+}
+
+function parse(uri) {
+  return _url2.default.format((0, _prepare2.default)(_url2.default.parse(uri, true)));
 }

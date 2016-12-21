@@ -26,6 +26,14 @@ var _express = require("express");
 
 var _express2 = _interopRequireDefault(_express);
 
+var _shelljs = require("shelljs");
+
+var _shelljs2 = _interopRequireDefault(_shelljs);
+
+var _handlebars = require("handlebars");
+
+var _handlebars2 = _interopRequireDefault(_handlebars);
+
 var _bodyParser = require("body-parser");
 
 var _bodyParser2 = _interopRequireDefault(_bodyParser);
@@ -74,9 +82,13 @@ var ChartedServer = function () {
         app.get('/load', function (req, res) {
           return charted.loadChart(req, res);
         });
+        app.get('/oembed', function (req, res) {
+          return charted.getOembed(req, res);
+        });
 
         var server = app.listen(port, function () {
-          return resolve(server.address());
+          charted.address = server.address();
+          resolve(charted);
         });
       });
     }
@@ -87,6 +99,7 @@ var ChartedServer = function () {
 
     this.store = store;
     this.staticRoot = staticRoot;
+    this.env = { dev: false };
   }
 
   _createClass(ChartedServer, [{
@@ -100,7 +113,13 @@ var ChartedServer = function () {
           return;
         }
 
-        _this.respondWithHTML(res, 'index.html');
+        var code = _shelljs2.default.cat(_path2.default.join(__dirname, '..', 'templates', 'index.html'));
+        var html = _handlebars2.default.compile(code)({
+          ENV: _this.env,
+          dataUrl: params.dataUrl
+        });
+
+        res.status(200).send(html);
       });
     }
   }, {
@@ -157,19 +176,57 @@ var ChartedServer = function () {
       res.end(JSON.stringify({ status: 'ok' }));
     }
   }, {
-    key: "respondWithHTML",
-    value: function respondWithHTML(res, template) {
-      res.statusCode = 200;
-      res.sendFile(_path2.default.join(this.staticRoot, template));
+    key: "getOembed",
+    value: function getOembed(req, res) {
+      var _this3 = this;
+
+      // oEmbed requires a URL.
+      if (!req.query.url) {
+        this.badRequest(res, 'URL Required.');
+        return;
+      }
+
+      // Grab the id from the url.
+      var id = utils.parseChartId(req.query.url);
+
+      if (!id) {
+        this.badRequest(res, 'Could not parse ID from url');
+        return;
+      }
+
+      // get the chart.
+      this.store.get(id).then(function (params) {
+        if (!params) {
+          _this3.notFound(res, "chart " + id + " was not found.");
+          return;
+        }
+
+        res.setHeader('Content-Type', 'application/json');
+        res.statusCode = 200;
+
+        res.end(JSON.stringify({
+          type: 'rich',
+          version: '1.0',
+          width: 1280,
+          height: 600,
+          title: "Charted",
+          html: "<iframe src=\"https://www.charted.co/embed/" + id + "\" width=\"1280\" height=\"600\" scrolling=\"no\" frameborder=\"0\"></iframe>"
+        }));
+      });
     }
   }, {
     key: "respondWithChart",
     value: function respondWithChart(res, params) {
-      var _this3 = this;
+      var _this4 = this;
 
       (0, _request2.default)(params.dataUrl, function (err, resp, body) {
         if (err) {
-          _this3.badRequest(res, err);
+          _this4.badRequest(res, err);
+          return;
+        }
+
+        if (resp.statusCode != 200) {
+          _this4.badRequest(res, "Received HTTP-" + resp.statusCode + " status code from " + params.dataUrl);
           return;
         }
 

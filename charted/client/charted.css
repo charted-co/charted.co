@@ -1475,6 +1475,68 @@ footer a:hover {
 .page-option-item:hover .icon {
   opacity: 0.8;
 }
+.page-data-source {
+  border-top: 1px solid #f9f9f7;
+  margin: 10px 0 0;
+  padding: 16px 0 0;
+}
+.page-data-source label {
+  color: #b3b3b1;
+  font-size: 12px;
+  display: block;
+  padding: 0 0 3px 5px;
+}
+.page-data-source-form {
+  width: 100%;
+  padding: 0 40px 0 0;
+  position: relative;
+}
+.page-data-source-form input {
+  -webkit-border-radius: 3px 0 0 3px;
+  -moz-border-radius: 3px 0 0 3px;
+  border-radius: 3px 0 0 3px;
+  font-family: "source-sans-pro", "Helvetica Neue", "Helvetica", "Arial", "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
+  letter-spacing: 0;
+  font-weight: 400;
+  font-style: normal;
+  -webkit-transition: all 0.2s ease;
+  -moz-transition: all 0.2s ease;
+  -ms-transition: all 0.2s ease;
+  -o-transition: all 0.2s ease;
+  transition: all 0.2s ease;
+  border: 1px solid #f2f2f0;
+  color: #666665;
+  display: block;
+  font-size: 16px;
+  height: 36px;
+  padding: 5px 0 5px 5px;
+  width: 100%;
+}
+.page-data-source-form button {
+  -webkit-border-radius: 0 3px 3px 0;
+  -moz-border-radius: 0 3px 3px 0;
+  border-radius: 0 3px 3px 0;
+  font-family: "source-sans-pro", "Helvetica Neue", "Helvetica", "Arial", "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
+  letter-spacing: 0;
+  font-weight: 900;
+  font-style: normal;
+  background-color: white;
+  border: 1px solid #f2f2f0;
+  border-width: 1px 1px 1px 0;
+  font-size: 14px;
+  height: 36px;
+  letter-spacing: 0.05rem;
+  position: absolute;
+  right: 0;
+  text-transform: uppercase;
+  top: 0;
+  width: 40px;
+}
+.page-data-source-form button:hover {
+  border: 1px solid #232322;
+  background-color: #232322;
+  color: white;
+}
 .dark .page-option-item:hover {
   color: #f9f9f7;
 }
@@ -1483,6 +1545,9 @@ footer a:hover {
 }
 .dark .page-option-item:hover .icon {
   opacity: 1;
+}
+.dark .page-data-source {
+  border-top: 1px solid #666665;
 }
 @media screen and (min-width: 800px) {
   .page-settings {

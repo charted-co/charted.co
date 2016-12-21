@@ -19,6 +19,8 @@
     "connect": "^3.4.1",
     "express": "^4.13.4",
     "redis": "^2.4.2",
-    "request": "^2.69.0"
+    "request": "^2.69.0",
+    "shelljs": "0.5.x",
+    "handlebars": "^4.0.5"
   }
 }

@@ -74,7 +74,7 @@ define(["exports", "../shared/utils", "../shared/sha1"], function (exports, _uti
       this.seriesColors = {};
       this.seriesNames = {};
       this._color = COLOR_LIGHT;
-      this._grid = GRID_FULL;
+      this._grid = GRID_SPLIT;
 
       this._getDefaultTitle = function (i) {
         return '';
@@ -138,7 +138,7 @@ define(["exports", "../shared/utils", "../shared/sha1"], function (exports, _uti
           params.color = this._color;
         }
 
-        if (!this.isFull()) {
+        if (this.isFull()) {
           params.grid = this._grid;
         }
 

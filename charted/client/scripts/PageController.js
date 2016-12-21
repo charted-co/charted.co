@@ -108,7 +108,7 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
           return;
         }
 
-        _this.fetchPageData(url, /* id */null);
+        _this.fetchPageData(url, /* id */null, /* params */null);
       });
     }
 
@@ -137,19 +137,23 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
         }
 
         if (chartId) {
-          this.fetchPageData( /* url */null, chartId);
+          this.fetchPageData( /* url */null, chartId, /* params */null);
           return;
         }
 
         // We need to convert legacy params by saving them into the database and
         // then fetch data.
         if (legacyParams) {
-          this.params = legacyParams.withDefaultTitle(function (i) {
-            return _this2.getDefaultTitle(i);
-          });
-          this.updateURL( /* withoutServerUpdate */false, function () {
-            return _this2.fetchPageData();
-          });
+          (function () {
+            _this2.params = legacyParams.withDefaultTitle(function (i) {
+              return _this2.getDefaultTitle(i);
+            });
+            var legacyParamsCompressed = _this2.params.compress();
+            var legacyDataUrl = legacyParamsCompressed.dataUrl || null;
+            _this2.updateURL( /* withoutServerUpdate */false, function () {
+              return _this2.fetchPageData(legacyDataUrl, /* id */null, legacyParamsCompressed);
+            });
+          })();
         }
       }
 
@@ -159,7 +163,7 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
 
     }, {
       key: "fetchPageData",
-      value: function fetchPageData(dataUrl, id) {
+      value: function fetchPageData(dataUrl, id, params) {
         var _this3 = this;
 
         if (!dataUrl && !id) {
@@ -176,6 +180,9 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
         this.updatePageTitle('Charted (...)');
         this.clearExisting();
 
+        if (dataUrl) {
+          $('.data-file-input').val(dataUrl);
+        }
         var url = "/load/?url=" + encodeURIComponent(dataUrl || '') + "&id=" + encodeURIComponent(id || '');
         d3.json(url, function (err, resp) {
           if (err) {
@@ -183,7 +190,14 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
             return;
           }
 
-          _this3.params = _ChartParameters2.default.fromJSON(resp.params).withDefaultTitle(function (i) {
+          if (!resp.data || !resp.data.length) {
+            _this3.errorNotify(new Error('Missing data from source: ' + resp.params.dataUrl));
+            return;
+          }
+
+          var paramsToUse = params ? params : resp.params;
+          paramsToUse.dataUrl = resp.params.dataUrl;
+          _this3.params = _ChartParameters2.default.fromJSON(paramsToUse).withDefaultTitle(function (i) {
             return _this3.getDefaultTitle(i);
           });
           _this3.data = new _PageData2.default.fromJSON(_this3.params.url, resp.data);
@@ -223,7 +237,7 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
 
         this.setDimensions();
         this.updateURL();
-        $('.data-file-input').val(this.params.url);
+        $('.data-source-url').val(this.params.url);
       }
     }, {
       key: "clearExisting",
@@ -245,6 +259,7 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
         var $pageSettings = this.$body.find('.page-settings');
 
         $('.download-data').attr('href', this.params.url);
+        $('.data-source-url').val(this.params.url);
 
         // bind intereactions
         $pageSettings.find('.settings').click(function (event) {
@@ -265,6 +280,9 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
         });
         $pageSettings.find('.get-embed').click(function () {
           return _this5.getEmbed();
+        });
+        $pageSettings.find('.update-data-source').click(function () {
+          return _this5.fetchPageData($('.data-source-url').val(), /* id */null, _this5.params);
         });
       }
     }, {
@@ -392,7 +410,7 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
       key: "getDefaultTitle",
       value: function getDefaultTitle(chartIndex) {
         var series = this.params.charts[chartIndex].series;
-        if (!series) {
+        if (!series || !this.data) {
           return 'Charted';
         } else if (series.length === 1) {
           return this.getSeriesName(series[0]);
@@ -557,10 +575,24 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
           return;
         }
 
-        var chartId = utils.getChartId(this.params.compress());
-        var message = chartId + ':' + String(document.body.scrollHeight);
+        // Charted does a redirect away from the /embed/:id url, so we need to recreate the embed URL.
+        var src = window.location.toString().replace('/c/', '/embed/');
+
+        // scrollHeight is not great as the embed can never get shorter. This is a short term
+        // fix to deal with this fact.
+        var height = document.body.scrollHeight;
+        height = height > 600 && document.body.offsetWidth >= 800 ? 600 : height;
+
+        // Going to send a modified version of the standard resize context.
+        var message = {
+          chartId: utils.getChartId(this.params.compress()),
+          src: src,
+          context: "iframe.resize",
+          height: height
+        };
+
         if (window.parent) {
-          window.parent.postMessage(message, '*' /* Any site can embed charted */);
+          window.parent.postMessage(JSON.stringify(message), '*' /* Any site can embed charted */);
         }
       }
     }, {
@@ -568,13 +600,9 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
       value: function errorNotify(error) {
         this.$body.addClass('error').removeClass('loading');
         this.updatePageTitle();
-        var displayMessage = error.message || 'There’s been an error. Please check that ' + 'you are using a valid .csv file. If you are using a Google Spreadsheet or Dropbox ' + 'link, the privacy setting must be set to shareable.';
+        var displayMessage = error.message || error.responseText || 'There’s been an error. Please check that ' + 'you are using a valid .csv file. If you are using a Google Spreadsheet or Dropbox ' + 'link, the privacy setting must be set to shareable.';
 
         $('.error-message').html(displayMessage);
-
-        if (error && error.reponseText) {
-          console.error(error.responseText);
-        }
       }
     }, {
       key: "updateURL",

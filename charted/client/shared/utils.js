@@ -4,7 +4,7 @@ define(["exports", "./sha1"], function (exports, _sha) {
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.getFileExtension = exports.getTrimmedExtent = exports.getNiceIntervals = exports.getRoundedValue = exports.stringToNumber = exports.camelToHyphen = exports.parseQueryString = exports.getChartId = undefined;
+  exports.getFileExtension = exports.getTrimmedExtent = exports.getNiceIntervals = exports.getRoundedValue = exports.stringToNumber = exports.camelToHyphen = exports.parseQueryString = exports.parseChartId = exports.getChartId = undefined;
 
   var _sha2 = _interopRequireDefault(_sha);
 
@@ -15,6 +15,7 @@ define(["exports", "./sha1"], function (exports, _sha) {
   }
 
   exports.getChartId = getChartId;
+  exports.parseChartId = parseChartId;
   exports.parseQueryString = parseQueryString;
   exports.camelToHyphen = camelToHyphen;
   exports.stringToNumber = stringToNumber;
@@ -25,6 +26,11 @@ define(["exports", "./sha1"], function (exports, _sha) {
 
   function getChartId(params) {
     return (0, _sha2.default)(JSON.stringify(params), true);
+  }
+
+  function parseChartId(url) {
+    var match = /\/(?:c|embed)\/(\w+)(?:|\?.*)?/.exec(url);
+    return match ? match[1] : null;
   }
 
   function log10Floor(val) {

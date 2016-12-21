@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getFileExtension = exports.getTrimmedExtent = exports.getNiceIntervals = exports.getRoundedValue = exports.stringToNumber = exports.camelToHyphen = exports.parseQueryString = exports.getChartId = undefined;
+exports.getFileExtension = exports.getTrimmedExtent = exports.getNiceIntervals = exports.getRoundedValue = exports.stringToNumber = exports.camelToHyphen = exports.parseQueryString = exports.parseChartId = exports.getChartId = undefined;
 
 var _sha = require("./sha1");
 
@@ -12,6 +12,7 @@ var _sha2 = _interopRequireDefault(_sha);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 exports.getChartId = getChartId;
+exports.parseChartId = parseChartId;
 exports.parseQueryString = parseQueryString;
 exports.camelToHyphen = camelToHyphen;
 exports.stringToNumber = stringToNumber;
@@ -23,6 +24,12 @@ exports.getFileExtension = getFileExtension;
 
 function getChartId(params) {
   return (0, _sha2.default)(JSON.stringify(params), /* short */true);
+}
+
+/* Returns the Chart ID from a given URL */
+function parseChartId(url) {
+  var match = /\/(?:c|embed)\/(\w+)(?:|\?.*)?/.exec(url);
+  return match ? match[1] : null;
 }
 
 function log10Floor(val) {

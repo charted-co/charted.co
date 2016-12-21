@@ -27,4 +27,7 @@ let db = {
 }
 
 ChartedServer.start(Number(process.env.PORT) || 5000, path.join(__dirname, 'charted', 'client'), db)
-  .then((address) => console.log(`Running at ${address.address}:${address.port}`))
+  .then((server) => {
+    let address = server.address
+    console.log(`Running at ${address.address}:${address.port}`)
+  })
