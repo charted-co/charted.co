@@ -1,0 +1,38 @@
+## How to Deploy to Production
+
+Install pre-requisites:
+
+```
+$ brew install redis
+$ cd /path/to/charted.co
+$ npm install
+$ cd /path/to/charted
+$ npm install
+```
+
+Update Charted to the latest version:
+
+```
+$ cd /path/to/charted
+$ bin/build --prod --plugins=/path/to/charted.co/plugins/
+$ cp -r out /path/to/charted.co/charted
+```
+
+Verify:
+
+```
+$ redis-server
+$ heroku local web
+```
+
+Deploy:
+
+```
+$ git push heroku master
+```
+
+## Plugins
+
+There are two plugins: `header.html` and `footer.html`. Both
+of them are used to display ads from the Carbon network on
+charted.co (homepage only).
