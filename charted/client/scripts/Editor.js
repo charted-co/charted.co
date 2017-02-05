@@ -36,15 +36,13 @@ define(['exports'], function (exports) {
       _classCallCheck(this, Editor);
 
       this.rootElement = el;
-
       this.listener = function () {};
-
       this.setContent(this.getContent());
+
       this.rootElement.addEventListener('focusout', function () {
         var content = _this.getContent();
 
         _this.setContent(content);
-
         _this.listener(content);
       });
     }
@@ -71,10 +69,12 @@ define(['exports'], function (exports) {
 
         var sandbox = document.createElement('div');
         sandbox.innerHTML = text;
+
         var sanitizedText = sandbox.innerText;
         var sanitizedHTML = (sanitizedText || '').split('\n').map(function (line) {
           return '<div>' + line + '</div>';
         }).join('');
+
         this.rootElement.innerHTML = sanitizedHTML;
         this.rootElement.classList.remove('empty');
       }

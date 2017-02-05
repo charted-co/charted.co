@@ -149,7 +149,7 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
             });
             var legacyParamsCompressed = _this2.params.compress();
             var legacyDataUrl = legacyParamsCompressed.dataUrl || null;
-            _this2.updateURL( /* withoutServerUpdate */false, function () {
+            _this2.updateURL(function () {
               return _this2.fetchPageData(legacyDataUrl, /* id */null, legacyParamsCompressed);
             });
           })();
@@ -605,22 +605,17 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
       }
     }, {
       key: "updateURL",
-      value: function updateURL() {
-        var withoutServerUpdate = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
-        var cb = arguments[1];
-
+      value: function updateURL(cb) {
         this.updatePageTitle();
         var params = this.params.compress();
         var chartId = utils.getChartId(params);
         var path = "/c/" + chartId;
         window.history.pushState({}, null, path);
 
-        if (!withoutServerUpdate) {
-          d3.xhr(path).header('Content-Type', 'application/json').post(JSON.stringify(params), function () {
-            if (cb) cb();
-          });
-          // TODO (anton): Show an error if save failed
-        }
+        // TODO (anton): Show an error if save failed
+        d3.xhr(path).header('Content-Type', 'application/json').post(JSON.stringify(params), function () {
+          if (cb) cb();
+        });
       }
     }, {
       key: "updatePageTitle",

@@ -63,6 +63,8 @@ define(["exports", "../shared/utils"], function (exports, _utils) {
 
       _classCallCheck(this, PageData);
 
+      // Extract field names and build an array of row objects
+      // with field names as keys.
       var fieldNames = rows.shift();
       var fields = rows.map(function (row) {
         return fieldNames.reduce(function (memo, name, i) {
@@ -71,6 +73,7 @@ define(["exports", "../shared/utils"], function (exports, _utils) {
         }, {});
       });
 
+      // Build a list of indices.
       if (fieldNames.length != 1) {
         (function () {
           var indexField = fieldNames.shift();
@@ -84,12 +87,12 @@ define(["exports", "../shared/utils"], function (exports, _utils) {
         });
       }
 
+      // Build a list of serieses.
       this.serieses = fieldNames.map(function (label, i) {
-        return {
-          label: label,
-          seriesIndex: i
-        };
+        return { label: label, seriesIndex: i };
       });
+
+      // Build a list of lists per each column.
       this.data = fieldNames.map(function (label) {
         return fields.map(function (row, i) {
           return {

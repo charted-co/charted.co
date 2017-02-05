@@ -14,12 +14,14 @@ define(['exports'], function (exports) {
   exports.legendItem = legendItem;
   exports.moveChart = moveChart;
 
+
   function pageSettings() {
     return '\n    <div class="page-settings">\n      <button class="option-item settings" title="Settings">\n        <span class="icon icon-settings"></span>\n      </button>\n\n      <div class="settings-popover popover">\n        <div class="page-options">\n          <a class="page-option-item download-data" title="Download data">\n            <span class="icon icon-download"></span>Download data\n          </a>\n\n          <button class="page-option-item toggle-color" title="Switch background color">\n            <span class="icon icon-color"></span>Switch background\n          </button>\n\n          <div class="grid-option"></div>\n\n          <button class="page-option-item get-embed" title="Get embed code">\n            <span class="icon icon-embed"></span>Get embed code\n          </button>\n\n          <div class="page-data-source">\n            <label>Update data source</label>\n            <div class="page-data-source-form">\n              <input class="data-source-url">\n              <button class="update-data-source">Go</button>\n            </div>\n          </div>\n        </div>\n\n        <a href="/" class="page-option-item">\n          <span class="icon icon-back"></span>Charted home\n        </a>\n      </div>\n    </div>\n  ';
   }
 
   function embedOverlay(chartId) {
     var script = '<script src="' + window.location.origin + '/embed.js" data-charted="' + chartId + '"></script>';
+
     return '\n    <div class="overlay-container">\n      <div class="overlay-content">\n        <h1 class="overlay-title">Embed this Charted page</h1>\n        <p class="overlay-description">\n          You can add this embed to your website by copying and pasting the HTML code below.\n        </p>\n\n        <textarea class="embed-link">' + script + '</textarea>\n        <div class="iframe-container">' + script + '</div>\n      </div>\n      <div class="overlay-close"><span class="icon icon-x"></span></div>\n    </div>\n  ';
   }
 
@@ -60,15 +62,15 @@ define(['exports'], function (exports) {
       editableButtons = '<button class="move-chart"><span class="icon icon-move"></span></button>';
     }
 
-    return '\n    <li class="legend-item">\n      <div class="legend-label info-input">\n        <span class="legend-input" ' + editableAttribute + '>' + label.label + '</span>\n      </div>\n      <button class="legend-color">\n        <span style="background-color:' + label.color + ';" class="legend-dot"></span>\n      </button>\n      ' + editableButtons + '\n    </li>\n  ';
+    return '\n    <li class="legend-item">\n      <div class="legend-label info-input">\n        <span class="legend-input js-legendLabel" ' + editableAttribute + '>' + label.label + '</span>\n      </div>\n      <button class="legend-color">\n        <span style="background-color:' + label.color + ';" class="legend-dot"></span>\n      </button>\n      ' + editableButtons + '\n    </li>\n  ';
   }
 
   function moveChart(params) {
     var chartList = params.otherCharts.map(function (chart) {
       return '\n      <a href= "#" class="move-chart-option move-to-chart-' + chart.chartIndex + '">\n        ' + chart.title + '\n      </a>\n    ';
     }).join('\n');
-    var newChartButton = '';
 
+    var newChartButton = '';
     if (params.series.length > 1) {
       newChartButton = '\n      <a href= "#" class="move-chart-option move-to-new-chart">\n        <span class="icon icon-plus"></span>New chart\n      </a>\n    ';
     }

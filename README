@@ -14,7 +14,7 @@ Update Charted to the latest version:
 
 ```
 $ cd /path/to/charted
-$ bin/build --prod --plugins=/path/to/charted.co/plugins/
+$ bin/build --prod
 $ cp -r out /path/to/charted.co/charted
 ```
 
@@ -33,6 +33,10 @@ $ git push heroku master
 
 ## Plugins
 
-There are two plugins: `header.html` and `footer.html`. Both
-of them are used to display ads from the Carbon network on
-charted.co (homepage only).
+If you want display additional information on the homepage,
+Charted has a basic system of plugins. Just create two files,
+`header.html` and `footer.html` in the plugins directory and
+then run the build step with `--plugins`:
+
+$ bin/build --prod --plugin=/path/to/charted.co/plugins
+

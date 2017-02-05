@@ -70,10 +70,14 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
 
       this.pageController = pageController;
       this.$wrapper = $wrapper;
+
+      // create initial HTML
       var chartHtmlParameters = {
         editable: pageController.getEditability()
       };
       this.$wrapper.html(templates.chart(chartHtmlParameters));
+
+      // cache elements
       this.$container = $wrapper.find('.chart').first();
       this.$plot = this.$container.find('.chart-plot').first();
       this.$xBeg = this.$container.find('.x-beginning');
@@ -87,29 +91,32 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
       this.$optionsElem = this.$container.find('.chart-options');
       this.$pageSettings = $('.page-settings');
       this.$chartDescription = this.$container.find('.chart-description');
+
       this.titleEditor = new _Editor2.default(this.$container.find('.js-chartTitle').get(0));
       this.titleEditor.onChange(function (content) {
         if (!content) {
           _this2.params.title = _this2.pageController.getDefaultTitle(_this2.chartIndex);
-
           _this2.titleEditor.setContent(_this2.params.title);
-
           return;
         }
 
         _this2.params.title = content;
-
         _this2.pageController.updateURL();
       });
+
       this.noteEditor = new _Editor2.default(this.$container.find('.js-chartNote').get(0));
       this.noteEditor.onChange(function (content) {
         _this2.params.note = content;
-
         _this2.pageController.updateURL();
       });
+
+      // refresh chart and bind interactions
       this.refresh(chartIndex, params, data);
       this.bindInteractions();
     }
+
+    // TODO(anton): These should be normal methods
+
 
     _createClass(Chart, [{
       key: "refresh",
@@ -118,17 +125,23 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
         this.params = params;
         this.data = new _ChartData2.default(data, this.params.series);
         this.legend = new _ChartLegend2.default(this.pageController, this.data, this);
+
         this.setupChart();
         this.render();
       }
     }, {
       key: "setupChart",
       value: function setupChart() {
+        // Clear any existing plot
         this.$plot.empty();
+
+        // Update chart UI
         this.titleEditor.setContent(this.params.title);
         this.noteEditor.setContent(this.params.note);
+
         this.$xBeg.html(this.data.getIndexExtent()[0]);
         this.$xEnd.html(this.data.getIndexExtent()[1]);
+
         this.setScales();
         this.createChartElements();
       }
@@ -137,13 +150,14 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
       value: function setScales() {
         var _this3 = this;
 
+        // set x- and y-axis scales and position functions
         this.xScale = d3.scale.linear().domain([0, this.data.getIndexCount()]);
 
         this.xPosition = function (d) {
           return Math.floor(_this3.xScale(d.x), 0);
         };
-
         this.xBarWidth = function (d) {
+          // have a pixel space when columns are at least 8px wide
           var space = _this3.plotWidth / _this3.data.getIndexCount() >= 8 ? 1 : 0;
           var nextXScale = d.x + 1 < _this3.data.getIndexCount() ? _this3.xScale(d.x + 1) : _this3.plotWidth;
           return Math.floor(nextXScale, 0) - _this3.xPosition(d) - space;
@@ -154,21 +168,21 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
         };
 
         this.yScale = d3.scale.linear();
-
         this.yPosition = function (d) {
           return _this3.yScale(d.y);
         };
-
         this.yPositionStacked = function (d) {
           return _this3.yScale(d.y1);
         };
-
         this.yHeightStacked = function (d) {
           return d.y === 0 ? 0 : _this3.yScale(d.y0) - _this3.yScale(d.y1) + 1;
         };
 
+        // set stacked and unstacked y ranges
         this.yRangeStacked = this.data.getStackedExtent();
         this.yRangeUnstacked = this.data.getUnstackedExtent();
+
+        // set color scales
         this.colorLight = '#333333';
         this.colorDark = '#FFFFFF';
         this.colorRange = ['#6DCC73', '#1D7775', '#4FCFD5', '#FCE651', '#FF7050', '#FFC050', '#999999'];
@@ -182,7 +196,6 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
         this.layers = this.layerGroup.selectAll('g').data(this.data.getSeriesIndices()).enter().append('g').attr('class', 'layer');
 
         var _this = this;
-
         this.layers.each(function (seriesIndex, i) {
           var layer = d3.select(this);
           layer.append('path').attr('class', 'line').each(function () {
@@ -199,12 +212,7 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
     }, {
       key: "updateSizes",
       value: function updateSizes() {
-        this.margin = {
-          top: 4,
-          right: 4,
-          bottom: 0,
-          left: 0
-        };
+        this.margin = { top: 4, right: 4, bottom: 0, left: 0 };
         this.width = this.$plot.width();
         this.plotWidth = this.width - this.margin.right - this.margin.left;
         this.height = this.$plot.height();
@@ -219,12 +227,14 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
       value: function render() {
         this.updateSizes();
 
+        // apply general rounding and background color
         if (this.params.rounding === 'off') {
           this.$container.addClass('rounding-off');
         } else {
           this.$container.removeClass('rounding-off');
         }
 
+        // go to last point and refresh chart
         this.selectedX = this.data.getIndexCount() - 1;
         this.applyChartColors();
         this.applyChartType();
@@ -237,7 +247,6 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
       key: "getDefaulSeriesColor",
       value: function getDefaulSeriesColor(seriesIndex) {
         var seriesIndicies = this.data.getSeriesIndices();
-
         if (seriesIndicies.length === 1) {
           return this.pageController.params.isLight() ? this.colorLight : this.colorDark;
         }
@@ -245,6 +254,7 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
         var chartSeriesIndex = seriesIndicies.indexOf(seriesIndex);
         var colorCount = this.colorRange.length;
         var seriesColorIndex = chartSeriesIndex % colorCount;
+
         return this.colorRange[seriesColorIndex];
       }
     }, {
@@ -256,7 +266,6 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
       key: "applyChartColors",
       value: function applyChartColors() {
         var _this = this;
-
         this.layers.each(function (seriesIndex) {
           var layer = d3.select(this);
           layer.selectAll('.line').attr('stroke', _this.getSeriesColor(seriesIndex));
@@ -273,31 +282,31 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
         } else {
           this.$container.removeClass('show-columns');
           this.yRange = this.yRangeUnstacked;
+
+          // focus the series with the max value at the selected point
           var dataAtLastIndex = this.data.getUnstackedValuesAtIndex(this.selectedX);
-          this.focusedSeriesIndex = dataAtLastIndex.indexOf(d3.max(dataAtLastIndex));
+          this.focusedSeriesIndex = dataAtLastIndex.indexOf(d3.max(dataAtLastIndex)); // TODO
         }
 
+        // yScale range should always include 0, abd add 10% margin for negatives; TODO: make margin pixel based
         var adjustExtent = function adjustExtent(extent) {
           var min = extent[0] < 0 ? extent[0] * 1.1 : 0;
           return [min, Math.max(0, extent[1])];
         };
-
         this.yScale.domain(adjustExtent(this.yRange));
       }
     }, {
       key: "plotAll",
       value: function plotAll() {
         var _this = this;
-
         this.layers.each(function (seriesIndex, i) {
           var layer = d3.select(this);
           layer.selectAll('.column').attr('x', _this.xPosition).attr('y', _this.yPositionStacked).attr('height', _this.yHeightStacked).attr('width', _this.xBarWidth);
           layer.selectAll('.line').attr('d', _this.line(_this.data.getValuesForSeries(i)));
 
+          // plot the dot at the last point
           var firstPoint = _this.data.getFirstDatum(i);
-
           var lastPoint = _this.data.getLastDatum(i);
-
           layer.selectAll('.last-dot').attr('cx', _this.xPositionLine(lastPoint)).attr('cy', _this.yPosition(lastPoint));
           layer.selectAll('.first-dot').attr('cx', _this.xPositionLine(firstPoint)).attr('cy', _this.yPosition(firstPoint));
         });
@@ -307,18 +316,20 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
       value: function updateYAxis() {
         var _this4 = this;
 
+        // apply Y axis labels
         var HTML = '';
         var intervals = (0, _utils.getNiceIntervals)(this.yRange, this.height);
-        var maxTop = this.$yAxis.height() - this.$container.height() + 60;
+        var maxTop = this.$yAxis.height() - this.$container.height() + 60; // must be 60px below the top
         intervals.forEach(function (interval) {
           interval.top = _this4.yScale(interval.value);
-
           if (interval.top >= maxTop) {
             interval.display = _this4.params.rounding === 'on' ? interval.displayString : interval.rawString;
             HTML += templates.yAxisLabel(interval);
           }
         });
         this.$yAxis.html(HTML);
+
+        // update zero line position
         this.$zeroLine.removeClass('hidden').css('top', this.yScale(0));
       }
     }, {
@@ -331,7 +342,10 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
         var thisXPosition = this.xPosition(this.data.getDatum(0, this.selectedX));
         var adjust = 0.5 * this.xBarWidth(this.data.getDatum(0, this.selectedX));
         var selectionLeft = thisXPosition + adjust;
+
+        // move selection
         this.$selectionElem.css('left', selectionLeft);
+
         var beg = selectionLeft;
         var end = selectionLeft + this.$selectionXLabel.width();
 
@@ -343,6 +357,7 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
           end = selectionLeft;
         }
 
+        // hide x-axis labels if necessary
         if (beg <= this.xBegEdge) {
           this.$xBeg.addClass('hidden');
         } else {
@@ -355,33 +370,27 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
           this.$xEnd.removeClass('hidden');
         }
 
+        // move selected dots
         var _this = this;
-
         this.layers.each(function (seriesIndex, i) {
           var seriesExtent = _this.data.getSeriesExtent(i);
-
           if (_this.selectedX >= seriesExtent[0] && _this.selectedX <= seriesExtent[1]) {
-            d3.select(this).selectAll('.selected-dot').attr('cx', _this.xPositionLine(_this.data.getDatum(i, _this.selectedX))).attr('cy', _this.yPosition(_this.data.getDatum(i, _this.selectedX))).style({
-              'opacity': '1'
-            });
+            d3.select(this).selectAll('.selected-dot').attr('cx', _this.xPositionLine(_this.data.getDatum(i, _this.selectedX))).attr('cy', _this.yPosition(_this.data.getDatum(i, _this.selectedX))).style({ 'opacity': '1' });
           } else {
-            d3.select(this).selectAll('.selected-dot').style({
-              'opacity': '0'
-            });
+            d3.select(this).selectAll('.selected-dot').style({ 'opacity': '0' });
           }
         });
-        var columns = this.data.getIndexCount();
 
+        // add selected class to the appropriate columns
+        var columns = this.data.getIndexCount();
         for (var i = 0; i < columns; i++) {
           var columnClass = 'column';
-
           if (_this.selectedX === i) {
             columnClass = 'column selected';
           }
 
           for (var j = 0; j < _this.data.getSeriesCount(); j++) {
             var el = _this.data.getDatum(j, i).columnEl;
-
             if (el) {
               d3.select(el).attr('class', columnClass);
             }
@@ -393,9 +402,11 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
     }, {
       key: "updateSelectionText",
       value: function updateSelectionText() {
+        // a focusedSeriesIndex >= to the ySeries length means use the total
         var showTotal = this.focusedSeriesIndex >= this.data.getSeriesCount();
         var chartYSeries = showTotal ? this.data.getSeriesCount() - 1 : this.focusedSeriesIndex;
         var thisPoint = this.data.getDatum(chartYSeries, this.selectedX);
+
         var thisYLabel = '';
         var thisYColor = this.pageController.params.isLight() ? this.colorLight : this.colorDark;
 
@@ -414,6 +425,8 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
         var seriesTotal = seriesExtent[1] + seriesExtent[0];
         var thisValue = showTotal ? seriesTotal : (0, _utils.stringToNumber)(thisPoint.yRaw);
         var thisValueFormatted = this.params.rounding === 'on' ? (0, _utils.getRoundedValue)(thisValue, this.yRange) : thisValue;
+
+        // update selection
         this.$selectionYLabel.text(thisYLabel).css('color', thisYColor);
         this.$selectionXLabel.text(thisPoint.xLabel);
         this.$selectionValue.text(thisValueFormatted).css('color', thisYColor);
@@ -423,17 +436,18 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
       value: function bindInteractions() {
         var _this5 = this;
 
+        // chart option toggles
         Object.keys(_PageController.OPTIONS).forEach(function (option) {
           _this5.$container.find('.toggle-' + option).click(function (event) {
             event.preventDefault();
             var options = _PageController.OPTIONS[option];
             _this5.params[option] = _this5.params[option] === options[0] ? options[1] : options[0];
-
             _this5.render();
-
             _this5.pageController.updateURL();
           });
         });
+
+        // handle mouseover
         this.$container.mousemove(function (pixel) {
           return _this5.handleMouseover(pixel);
         });
@@ -443,6 +457,7 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
       value: function handleMouseover(pixel) {
         var _this6 = this;
 
+        // show the options
         this.$container.addClass('active');
         $('body').addClass('page-active');
 
@@ -465,14 +480,15 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
           }
 
           _this6.$container.removeClass('active');
-
           $('body').removeClass('page-active');
-
           _this6.$pageSettings.removeClass('open');
         }, 1000);
-        if (pixel.pageY - this.$plot.offset().top > this.$plot.height()) return;
-        var closestPoint = this.getClosestPoint(pixel);
 
+        // don't change the selection if mouseover is below the plot
+        if (pixel.pageY - this.$plot.offset().top > this.$plot.height()) return;
+
+        // update everything if the selextedX or focusedSeriesIndex is different
+        var closestPoint = this.getClosestPoint(pixel);
         if (closestPoint.selectedX !== this.selectedX || closestPoint.focusedSeriesIndex !== this.focusedSeriesIndex) {
           this.selectedX = closestPoint.selectedX;
           this.focusedSeriesIndex = closestPoint.focusedSeriesIndex;
@@ -489,18 +505,16 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
         var pixelY = pixel.pageY - this.$plot.offset().top;
         var currentX = Math.min(Math.floor(Math.max(pixelX, 0)), this.data.getIndexCount() - 1);
         var currentY = this.focusedSeriesIndex;
+
+        // determine the closest y series
         var diffs = d3.range(this.data.getSeriesCount()).map(function (i) {
           var thisDatum = _this7.data.getDatum(i, currentX);
-
           var indexPixelY = _this7.params.type === 'line' ? _this7.yPosition(thisDatum) : _this7.yPositionStacked(thisDatum);
           var diff = _this7.params.type === 'line' ? Math.abs(pixelY - indexPixelY) : pixelY - indexPixelY;
           var isValid = _this7.params.type === 'line' || diff > 0;
-          return {
-            diff: diff,
-            series: i,
-            isValid: isValid
-          };
+          return { diff: diff, series: i, isValid: isValid };
         });
+
         diffs = diffs.filter(function (diff) {
           return diff.isValid;
         });
@@ -509,19 +523,17 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
         });
         currentY = diffs.length ? diffs[0].series : 0;
 
+        // use the total if it's a column chart and the mouse position it
         if (this.params.type === 'column') {
+          // determine if position is over a y series stack, else show the total
           var yValueExtent = this.data.getStackedExtentForIndex(currentX);
           var yPixelExtent = [this.yScale(yValueExtent[0]), this.yScale(yValueExtent[1])];
-
           if (pixelY <= yPixelExtent[1] || pixelY > yPixelExtent[0]) {
             currentY = this.data.getSeriesCount();
           }
         }
 
-        return {
-          selectedX: currentX,
-          focusedSeriesIndex: currentY
-        };
+        return { selectedX: currentX, focusedSeriesIndex: currentY };
       }
     }, {
       key: "updatefocusedSeriesIndex",

@@ -56,6 +56,7 @@ define(["exports", "../shared/utils", "./PageData"], function (exports, _utils, 
       value: function formatData() {
         var _this = this;
 
+        // add stackedPosition
         this._data[0].forEach(function (row, i) {
           var negY0 = 0;
           var posY0 = 0;
@@ -148,7 +149,6 @@ define(["exports", "../shared/utils", "./PageData"], function (exports, _utils, 
         var yRawValues = this._data[seriesIndex].map(function (item) {
           return item.yRaw;
         });
-
         return (0, _utils.getTrimmedExtent)(yRawValues);
       }
     }, {
@@ -172,7 +172,6 @@ define(["exports", "../shared/utils", "./PageData"], function (exports, _utils, 
       key: "getStackedExtentForIndex",
       value: function getStackedExtentForIndex(index) {
         var extent = [0, 0];
-
         this._data.forEach(function (series) {
           var minOrMax = series[index].y < 0 ? 0 : 1;
           extent[minOrMax] += series[index].y;

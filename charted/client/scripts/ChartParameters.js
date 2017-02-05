@@ -56,11 +56,13 @@ define(["exports", "../shared/utils", "../shared/sha1"], function (exports, _uti
     };
   }();
 
+  // TODO(anton): These should be in shared/constants
   var COLOR_DARK = 'dark';
   var COLOR_LIGHT = 'light';
   var GRID_FULL = 'full';
   var GRID_SPLIT = 'split';
   var OPTIONS = {
+    // Default values are first
     type: ['column', 'line'],
     rounding: ['on', 'off']
   };
@@ -75,10 +77,9 @@ define(["exports", "../shared/utils", "../shared/sha1"], function (exports, _uti
       this.seriesNames = {};
       this._color = COLOR_LIGHT;
       this._grid = GRID_SPLIT;
-
       this._getDefaultTitle = function (i) {
         return '';
-      };
+      }; // no-op
     }
 
     _createClass(ChartParameters, [{
@@ -122,42 +123,50 @@ define(["exports", "../shared/utils", "../shared/sha1"], function (exports, _uti
       value: function compress() {
         var _this = this;
 
-        var params = {
-          dataUrl: this.url
-        };
+        var params = { dataUrl: this.url };
 
+        // Add seriesNames, if applicable.
         if (Object.keys(this.seriesNames).length) {
           params.seriesNames = this.seriesNames;
         }
 
+        // Add seriesColors, if applicable.
         if (Object.keys(this.seriesColors).length) {
           params.seriesColors = this.seriesColors;
         }
 
+        // Add color, if applicable.
         if (!this.isLight()) {
           params.color = this._color;
         }
 
+        // Add grid, if applicable.
         if (this.isFull()) {
           params.grid = this._grid;
         }
 
+        // Add applicable chart parameters.
         params.charts = this.charts.map(function (chart, i) {
           var compressed = {};
+
+          // Add applicable chart options.
           Object.keys(OPTIONS).forEach(function (option) {
             if (chart[option] && chart[option] !== OPTIONS[option][0]) {
               compressed[option] = chart[option];
             }
           });
 
+          // Add applicable title.
           if (chart.title && chart.title !== _this._getDefaultTitle(i)) {
             compressed.title = chart.title;
           }
 
+          // Add applicable note.
           if (chart.note) {
             compressed.note = chart.note;
           }
 
+          // Add applicable series.
           if (i > 0 && chart.series) {
             compressed.series = chart.series;
           }
@@ -165,6 +174,7 @@ define(["exports", "../shared/utils", "../shared/sha1"], function (exports, _uti
           return compressed;
         });
 
+        // Delete charts if empty.
         if (params.charts.length === 1 && !Object.keys(params.charts[0]).length) {
           delete params.charts;
         }
@@ -180,6 +190,7 @@ define(["exports", "../shared/utils", "../shared/sha1"], function (exports, _uti
         if (data.seriesColors) params.seriesColors = data.seriesColors;
         if (data.grid) params._grid = data.grid;
         if (data.color) params._color = data.color;
+
         return params;
       }
     }, {
@@ -187,13 +198,11 @@ define(["exports", "../shared/utils", "../shared/sha1"], function (exports, _uti
       value: function fromQueryString(qs) {
         var urlParams = utils.parseQueryString(qs);
         var data = urlParams.data;
-
         if (!data) {
           return null;
         }
 
         var url = data.csvUrl || data.dataUrl;
-
         if (!url) {
           return null;
         }
@@ -204,6 +213,7 @@ define(["exports", "../shared/utils", "../shared/sha1"], function (exports, _uti
         if (data.seriesColors) params.seriesColors = data.seriesColors;
         if (data.grid) params._grid = data.grid;
         if (data.color) params._color = data.color;
+
         return params;
       }
     }]);

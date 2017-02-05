@@ -15,17 +15,23 @@ define(['exports', './Editor'], function (exports, _Editor) {
   }
 
   function testEditor(test) {
+    // We need to append this sandbox to the DOM because
+    // otherwise innerText omits newlines.
     var sandbox = document.createElement('div');
     document.body.appendChild(sandbox);
+
     var editor = new _Editor2.default(sandbox);
     test.equal('', editor.getContent());
     test.ok(editor.rootElement.classList.contains('empty'));
+
     editor.setContent('Hello\nWorld');
     test.equal('Hello\nWorld', editor.getContent());
     test.ok(!editor.rootElement.classList.contains('empty'));
+
     sandbox.innerHTML = 'Hello<div>World</div>';
     test.equal('Hello\nWorld', editor.getContent());
     test.ok(!editor.rootElement.classList.contains('empty'));
+
     document.body.removeChild(sandbox);
     test.done();
   }

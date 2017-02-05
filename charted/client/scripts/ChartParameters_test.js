@@ -31,10 +31,10 @@ define(['exports', './ChartParameters'], function (exports, _ChartParameters) {
   }
 
   function testFromQueryString(test) {
+    // This is URL for our demo chart
     var qs = '?%7B"dataUrl"%3A"https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PSaAXtklG4UyFm2' + 'lui5d4k_UNEO1laAMpzMWVh0FMTU%2Fexport%3Fgid%3D0%26format%3Dcsv"%2C"charts"%3A%5B%7B"' + 'title"%3A"An%20Example%20Chart"%2C"note"%3A"This%20is%20an%20example%20chart%20visua' + 'lizing%20some%20fake%20data"%7D%5D%7D';
 
     var params = _ChartParameters2.default.fromQueryString(qs);
-
     test.equal(params.url, 'https://docs.google.com/spreadsheets/d/1PSaAXtklG4UyFm2lui5d4k_UNEO1laAMpzMWVh0FMTU/export?gid=0&format=csv');
     test.equal(1, params.charts.length);
     test.equal('This is an example chart visualizing some fake data', params.charts[0].note);
@@ -73,119 +73,80 @@ define(['exports', './ChartParameters'], function (exports, _ChartParameters) {
   }
 
   function testCompressParams(test) {
+    // We start with a completely empty instance and then gradually
+    // add bits to it one by one.
     var params = new _ChartParameters2.default('http://charted.co');
+
     test.deepEqual(params.compress(), {
       dataUrl: 'http://charted.co'
     });
+
     params.seriesNames[1] = 'test name';
     test.deepEqual(params.compress(), {
       dataUrl: 'http://charted.co',
-      seriesNames: {
-        1: 'test name'
-      }
+      seriesNames: { 1: 'test name' }
     });
+
     params.seriesColors[1] = '#fff';
     test.deepEqual(params.compress(), {
       dataUrl: 'http://charted.co',
-      seriesNames: {
-        1: 'test name'
-      },
-      seriesColors: {
-        1: '#fff'
-      }
+      seriesNames: { 1: 'test name' },
+      seriesColors: { 1: '#fff' }
     });
+
     params.toggleColor();
     test.deepEqual(params.compress(), {
       dataUrl: 'http://charted.co',
-      seriesNames: {
-        1: 'test name'
-      },
-      seriesColors: {
-        1: '#fff'
-      },
+      seriesNames: { 1: 'test name' },
+      seriesColors: { 1: '#fff' },
       color: 'dark'
     });
+
     params.toggleGrid();
     test.deepEqual(params.compress(), {
       dataUrl: 'http://charted.co',
-      seriesNames: {
-        1: 'test name'
-      },
-      seriesColors: {
-        1: '#fff'
-      },
+      seriesNames: { 1: 'test name' },
+      seriesColors: { 1: '#fff' },
       color: 'dark',
       grid: 'full'
     });
-    params.charts = [{
-      title: 'my title',
-      note: 'my note'
-    }];
+
+    params.charts = [{ title: 'my title', note: 'my note' }];
     test.deepEqual(params.compress(), {
       dataUrl: 'http://charted.co',
-      seriesNames: {
-        1: 'test name'
-      },
-      seriesColors: {
-        1: '#fff'
-      },
+      seriesNames: { 1: 'test name' },
+      seriesColors: { 1: '#fff' },
       color: 'dark',
       grid: 'full',
-      charts: [{
-        title: 'my title',
-        note: 'my note'
-      }]
+      charts: [{ title: 'my title', note: 'my note' }]
     });
-    params.charts = [{
-      title: 'chart 1',
-      type: 'column',
-      rounding: 'on'
-    }, {
-      title: 'chart 2',
-      type: 'line',
-      rounding: 'off',
-      series: []
-    }];
+
+    params.charts = [{ title: 'chart 1', type: 'column', rounding: 'on' }, { title: 'chart 2', type: 'line', rounding: 'off', series: [] }];
     test.deepEqual(params.compress(), {
       dataUrl: 'http://charted.co',
-      seriesNames: {
-        1: 'test name'
-      },
-      seriesColors: {
-        1: '#fff'
-      },
+      seriesNames: { 1: 'test name' },
+      seriesColors: { 1: '#fff' },
       color: 'dark',
       grid: 'full',
-      charts: [{
-        title: 'chart 1'
-      }, {
-        title: 'chart 2',
-        type: 'line',
-        rounding: 'off',
-        series: ''
-      }]
+      charts: [{ title: 'chart 1' }, { title: 'chart 2', type: 'line', rounding: 'off', series: '' }]
     });
+
     test.done();
   }
 
   function testDefaultTitle(test) {
+    // We start with a completely empty instance and then gradually
+    // add bits to it one by one.
     var params = new _ChartParameters2.default('http://charted.co');
     params.withDefaultTitle(function (i) {
       return 'title ' + (i + 1);
     });
-    params.charts = [{
-      title: 'title 1'
-    }, {
-      title: 'title 2'
-    }, {
-      title: 'title X'
-    }];
+    params.charts = [{ title: 'title 1' }, { title: 'title 2' }, { title: 'title X' }];
     test.deepEqual(params.compress(), {
       dataUrl: 'http://charted.co',
-      charts: [{}, {}, {
-        title: 'title X'
-      }]
+      charts: [{}, {}, { title: 'title X' }]
     });
+
     test.done();
   }
 });

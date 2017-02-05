@@ -21,7 +21,7 @@ exports.default = sha1;
  * Generates SHA-1 hash of string.
  */
 function sha1(msg) {
-  var short = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+  var short = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
   // convert string to UTF-8, as SHA only deals with byte-streams
   msg = utf8Encode(msg);
