@@ -1,37 +1,7 @@
 ## How to Deploy to Production
 
-Install pre-requisites:
-
 ```
-$ brew install redis
 $ cd /path/to/charted.co
 $ npm install
-$ cd /path/to/charted
-$ npm install
-```
-
-Update Charted to the latest version:
-
-```
-$ cd /path/to/charted
-$ bin/build --prod --plugins=/path/to/charted.co/plugins/
-$ cp -r out/ /path/to/charted.co/charted
-```
-
-Verify:
-
-```
-$ npm start
-```
-
-Deploy:
-
-```
 $ gcloud app deploy
 ```
-
-## Plugins
-
-There are two plugins: `head.html` and `footer.html`. The former
-is used to install Google Analytics while the latter is used to
-add a privacy link to the footer.

@@ -1,7 +1,7 @@
 'use strict'
 
 const path = require('path')
-const ChartedServer = require('./charted/server/charted.js').default
+const ChartedServer = require('chartedjs').default
 const Datastore = require('@google-cloud/datastore')
 const datastore = new Datastore({projectId: 'charted-181601'})
 
@@ -27,7 +27,7 @@ let db = {
   }
 }
 
-ChartedServer.start(Number(process.env.PORT) || 5000, path.join(__dirname, 'charted', 'client'), db)
+ChartedServer.start(Number(process.env.PORT) || 5000, path.join(__dirname, 'node_modules', 'chartedjs', 'out', 'client'), db)
   .then((server) => {
     let address = server.address
     console.log(`Running at ${address.address}:${address.port}`)

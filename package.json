@@ -1,6 +1,6 @@
 {
   "name": "charted-co",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "charted.co",
   "main": "index.js",
   "scripts": {
@@ -13,7 +13,7 @@
     "type": "git",
     "url": "https://github.com/valueof/charted-co"
   },
-  "license": "LicenseRef-LICENSE",
+  "license": "MIT",
   "dependencies": {
     "body-parser": "^1.15.0",
     "connect": "^3.4.1",
@@ -21,6 +21,7 @@
     "@google-cloud/datastore": "1.1.0",
     "request": "^2.69.0",
     "shelljs": "0.5.x",
-    "handlebars": "^4.0.5"
+    "handlebars": "^4.0.5",
+    "chartedjs": "3.1.1"
   }
 }
