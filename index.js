@@ -2,26 +2,27 @@
 
 const path = require('path')
 const ChartedServer = require('./charted/server/charted.js').default
-const client = require('redis').createClient(process.env.REDIS_URL);
+const Datastore = require('@google-cloud/datastore')
+const datastore = new Datastore({projectId: 'charted-181601'})
 
 let db = {
   get: function (key) {
     return new Promise((resolve, reject) => {
-      client.get(key, (err, reply) => {
-        if (err) reject(err)
-        if (!reply) resolve(null)
-        resolve(JSON.parse(reply))
-      })
+      key = datastore.key(['Chart', key])
+
+      datastore.get(key)
+        .then((results) => resolve(results[0]))
+        .catch((err) => reject(err))
     })
   },
 
-  set: function (key, value) {
+  set: function (key, data) {
     return new Promise((resolve, reject) => {
-      let data = JSON.stringify(value)
-      client.set(key, data, function (err) {
-        if (err) reject(err)
-        resolve()
-      })
+      key = datastore.key(['Chart', key])
+
+      datastore.upsert({key, data})
+        .then((entity) => resolve())
+        .catch((err) => reject(err))
     })
   }
 }
