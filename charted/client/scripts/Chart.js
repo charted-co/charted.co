@@ -1,9 +1,11 @@
 "use strict";
 
-define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageController", "./PageData", "./Editor", "./templates"], function (exports, _ChartData, _ChartLegend, _utils, _PageController, _PageData, _Editor, _templates) {
+define(["exports", "./Actions", "./ChartData", "./ChartLegend", "../shared/utils", "./PageController", "./PageData", "./Editor", "./templates", "./dom"], function (exports, _Actions, _ChartData, _ChartLegend, _utils, _PageController, _PageData, _Editor, _templates, _dom) {
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
+
+  var _Actions2 = _interopRequireDefault(_Actions);
 
   var _ChartData2 = _interopRequireDefault(_ChartData);
 
@@ -14,6 +16,8 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
   var _Editor2 = _interopRequireDefault(_Editor);
 
   var templates = _interopRequireWildcard(_templates);
+
+  var _dom2 = _interopRequireDefault(_dom);
 
   function _interopRequireWildcard(obj) {
     if (obj && obj.__esModule) {
@@ -63,36 +67,38 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
   }();
 
   var Chart = function () {
-    function Chart(pageController, chartIndex, $wrapper, params, data) {
+    function Chart(pageController, chartIndex, wrapper, params, data) {
       var _this2 = this;
 
       _classCallCheck(this, Chart);
 
       this.pageController = pageController;
-      this.$wrapper = $wrapper;
+      this.wrapper = wrapper;
 
-      // create initial HTML
+      // Create initial HTML
       var chartHtmlParameters = {
         editable: pageController.getEditability()
       };
-      this.$wrapper.html(templates.chart(chartHtmlParameters));
 
-      // cache elements
-      this.$container = $wrapper.find('.chart').first();
-      this.$plot = this.$container.find('.chart-plot').first();
-      this.$xBeg = this.$container.find('.x-beginning');
-      this.$xEnd = this.$container.find('.x-end');
-      this.$selectionElem = this.$container.find('.selection');
-      this.$selectionXLabel = this.$container.find('.selection-xlabel');
-      this.$selectionYLabel = this.$container.find('.selection-ylabel');
-      this.$yAxis = this.$container.find('.y-axis');
-      this.$zeroLine = this.$container.find('.zero-line');
-      this.$selectionValue = this.$container.find('.selection-value');
-      this.$optionsElem = this.$container.find('.chart-options');
-      this.$pageSettings = $('.page-settings');
-      this.$chartDescription = this.$container.find('.chart-description');
+      this.wrapper.innerHTML = templates.chart(chartHtmlParameters);
+      this.container = _dom2.default.assert(_dom2.default.get('js-chart', this.wrapper));
 
-      this.titleEditor = new _Editor2.default(this.$container.find('.js-chartTitle').get(0));
+      // Cache elements
+      this.plot = _dom2.default.assert(_dom2.default.get('js-chartPlot', this.container));
+      this.xBeg = _dom2.default.assert(_dom2.default.get('js-xBeg', this.container));
+      this.xEnd = _dom2.default.assert(_dom2.default.get('js-xEnd', this.container));
+      this.selectionElem = _dom2.default.assert(_dom2.default.get('js-selection', this.container));
+      this.selectionXLabel = _dom2.default.assert(_dom2.default.get('js-selectionXLabel', this.container));
+      this.selectionYLabel = _dom2.default.assert(_dom2.default.get('js-selectionYLabel', this.container));
+      this.selectionValue = _dom2.default.assert(_dom2.default.get('js-selectionValue', this.container));
+      this.yAxis = _dom2.default.assert(_dom2.default.get('js-yAxis', this.container));
+      this.zeroLine = _dom2.default.assert(_dom2.default.get('js-zeroLine', this.container));
+      this.optionsElem = _dom2.default.assert(_dom2.default.get('js-chartOptions', this.container));
+      this.chartDescription = _dom2.default.assert(_dom2.default.get('js-chartDescription', this.container));
+      this.pageSettings = _dom2.default.assert(_dom2.default.get('js-settings'));
+
+      var chartTitle = _dom2.default.assert(_dom2.default.get('js-chartTitle', this.container));
+      this.titleEditor = new _Editor2.default(chartTitle);
       this.titleEditor.onChange(function (content) {
         if (!content) {
           _this2.params.title = _this2.pageController.getDefaultTitle(_this2.chartIndex);
@@ -104,7 +110,8 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
         _this2.pageController.updateURL();
       });
 
-      this.noteEditor = new _Editor2.default(this.$container.find('.js-chartNote').get(0));
+      var chartNote = _dom2.default.assert(_dom2.default.get('js-chartNote', this.container));
+      this.noteEditor = new _Editor2.default(chartNote);
       this.noteEditor.onChange(function (content) {
         _this2.params.note = content;
         _this2.pageController.updateURL();
@@ -112,6 +119,7 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
 
       // refresh chart and bind interactions
       this.refresh(chartIndex, params, data);
+      this.actions = new _Actions2.default(this.container);
       this.bindInteractions();
     }
 
@@ -119,12 +127,29 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
 
 
     _createClass(Chart, [{
+      key: "activate",
+      value: function activate() {
+        this.actions.add('toggle-type', this.toggleType, this).add('toggle-rounding', this.toggleRounding, this).activate();
+      }
+    }, {
+      key: "deactivate",
+      value: function deactivate() {
+        this.actions.deactivate();
+        delete this.actions;
+      }
+    }, {
       key: "refresh",
       value: function refresh(chartIndex, params, data) {
         this.chartIndex = chartIndex;
         this.params = params;
         this.data = new _ChartData2.default(data, this.params.series);
+
+        if (this.legend) {
+          this.legend.deactivate();
+        }
+
         this.legend = new _ChartLegend2.default(this.pageController, this.data, this);
+        this.legend.activate();
 
         this.setupChart();
         this.render();
@@ -133,14 +158,14 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
       key: "setupChart",
       value: function setupChart() {
         // Clear any existing plot
-        this.$plot.empty();
+        this.plot.innerHTML = '';
 
         // Update chart UI
         this.titleEditor.setContent(this.params.title);
         this.noteEditor.setContent(this.params.note);
 
-        this.$xBeg.html(this.data.getIndexExtent()[0]);
-        this.$xEnd.html(this.data.getIndexExtent()[1]);
+        this.xBeg.innerHTML = this.data.getIndexExtent()[0];
+        this.xEnd.innerHTML = this.data.getIndexExtent()[1];
 
         this.setScales();
         this.createChartElements();
@@ -190,7 +215,7 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
     }, {
       key: "createChartElements",
       value: function createChartElements() {
-        this.svg = d3.select(this.$plot.get(0)).append('svg');
+        this.svg = d3.select(this.plot).append('svg');
         this.line = d3.svg.line().interpolate('cardinal').tension(0.96).x(this.xPositionLine).y(this.yPosition);
         this.layerGroup = this.svg.append('g').attr('class', 'layers');
         this.layers = this.layerGroup.selectAll('g').data(this.data.getSeriesIndices()).enter().append('g').attr('class', 'layer');
@@ -212,15 +237,18 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
     }, {
       key: "updateSizes",
       value: function updateSizes() {
+        var plotRect = _dom2.default.rect(this.plot);
+        var xBegRect = _dom2.default.rect(this.xBeg);
+
         this.margin = { top: 4, right: 4, bottom: 0, left: 0 };
-        this.width = this.$plot.width();
+        this.width = plotRect.width;
         this.plotWidth = this.width - this.margin.right - this.margin.left;
-        this.height = this.$plot.height();
+        this.height = plotRect.height;
         this.svg.attr('width', this.width).attr('height', this.height);
         this.xScale.range([this.margin.left, this.width - this.margin.right - this.margin.left]);
         this.yScale.range([this.height - this.margin.bottom, this.margin.top]);
-        this.xEndEdge = this.$xEnd.offset().left - this.$plot.offset().left;
-        this.xBegEdge = this.$xBeg.offset().left - this.$plot.offset().left + this.$xBeg.width();
+        this.xEndEdge = _dom2.default.rect(this.xEnd).left - plotRect.left;
+        this.xBegEdge = xBegRect.left - plotRect.left + xBegRect.width;
       }
     }, {
       key: "render",
@@ -228,11 +256,7 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
         this.updateSizes();
 
         // apply general rounding and background color
-        if (this.params.rounding === 'off') {
-          this.$container.addClass('rounding-off');
-        } else {
-          this.$container.removeClass('rounding-off');
-        }
+        _dom2.default.classlist.enable(this.container, 'rounding-off', this.params.rounding === 'off');
 
         // go to last point and refresh chart
         this.selectedX = this.data.getIndexCount() - 1;
@@ -275,12 +299,11 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
     }, {
       key: "applyChartType",
       value: function applyChartType() {
+        _dom2.default.classlist.enable(this.container, 'show-columns', this.params.type === 'column');
         if (this.params.type === 'column') {
-          this.$container.addClass('show-columns');
           this.yRange = this.yRangeStacked;
           this.focusedSeriesIndex = this.data.getSeriesCount();
         } else {
-          this.$container.removeClass('show-columns');
           this.yRange = this.yRangeUnstacked;
 
           // focus the series with the max value at the selected point
@@ -319,7 +342,7 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
         // apply Y axis labels
         var HTML = '';
         var intervals = (0, _utils.getNiceIntervals)(this.yRange, this.height);
-        var maxTop = this.$yAxis.height() - this.$container.height() + 60; // must be 60px below the top
+        var maxTop = _dom2.default.rect(this.yAxis).height - _dom2.default.rect(this.container).height + 60; // must be 60px below the top
         intervals.forEach(function (interval) {
           interval.top = _this4.yScale(interval.value);
           if (interval.top >= maxTop) {
@@ -327,10 +350,16 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
             HTML += templates.yAxisLabel(interval);
           }
         });
-        this.$yAxis.html(HTML);
+
+        this.yAxis.innerHTML = HTML;
 
         // update zero line position
-        this.$zeroLine.removeClass('hidden').css('top', this.yScale(0));
+        _dom2.default.classlist.remove(this.zeroLine, 'hidden');
+
+        var zeroLine = this.zeroLine;
+        if (zeroLine instanceof HTMLElement) {
+          zeroLine.style.top = this.yScale(0) + "px";
+        }
       }
     }, {
       key: "updateSelectedX",
@@ -344,31 +373,25 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
         var selectionLeft = thisXPosition + adjust;
 
         // move selection
-        this.$selectionElem.css('left', selectionLeft);
+        var selectionElem = this.selectionElem;
+        if (selectionElem instanceof HTMLElement) {
+          selectionElem.style.left = selectionLeft + "px";
+        }
 
+        var xLabelRect = _dom2.default.rect(this.selectionXLabel);
         var beg = selectionLeft;
-        var end = selectionLeft + this.$selectionXLabel.width();
+        var end = selectionLeft + xLabelRect.width;
 
-        if (selectionLeft < this.width / 2) {
-          this.$selectionElem.addClass('on-right');
-        } else {
-          this.$selectionElem.removeClass('on-right');
-          beg = selectionLeft - this.$selectionXLabel.width();
+        var onRight = selectionLeft < this.width / 2;
+        _dom2.default.classlist.enable(this.selectionElem, 'on-right', onRight);
+        if (!onRight) {
+          beg = selectionLeft - xLabelRect.width;
           end = selectionLeft;
         }
 
         // hide x-axis labels if necessary
-        if (beg <= this.xBegEdge) {
-          this.$xBeg.addClass('hidden');
-        } else {
-          this.$xBeg.removeClass('hidden');
-        }
-
-        if (end >= this.xEndEdge) {
-          this.$xEnd.addClass('hidden');
-        } else {
-          this.$xEnd.removeClass('hidden');
-        }
+        _dom2.default.classlist.enable(this.xBeg, 'hidden', beg <= this.xBegEdge);
+        _dom2.default.classlist.enable(this.xEnd, 'hidden', end >= this.xEndEdge);
 
         // move selected dots
         var _this = this;
@@ -427,68 +450,54 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
         var thisValueFormatted = this.params.rounding === 'on' ? (0, _utils.getRoundedValue)(thisValue, this.yRange) : thisValue;
 
         // update selection
-        this.$selectionYLabel.text(thisYLabel).css('color', thisYColor);
-        this.$selectionXLabel.text(thisPoint.xLabel);
-        this.$selectionValue.text(thisValueFormatted).css('color', thisYColor);
+        this.selectionYLabel.innerHTML = thisYLabel;
+        this.selectionXLabel.innerHTML = thisPoint.xLabel;
+        this.selectionValue.innerHTML = String(thisValueFormatted);
+
+        var label = this.selectionYLabel;
+        if (label instanceof HTMLElement) {
+          label.style.color = thisYColor;
+        }
+
+        var value = this.selectionValue;
+        if (value instanceof HTMLElement) {
+          value.style.color = thisYColor;
+        }
       }
     }, {
       key: "bindInteractions",
       value: function bindInteractions() {
-        var _this5 = this;
-
-        // chart option toggles
-        Object.keys(_PageController.OPTIONS).forEach(function (option) {
-          _this5.$container.find('.toggle-' + option).click(function (event) {
-            event.preventDefault();
-            var options = _PageController.OPTIONS[option];
-            _this5.params[option] = _this5.params[option] === options[0] ? options[1] : options[0];
-            _this5.render();
-            _this5.pageController.updateURL();
-          });
-        });
-
-        // handle mouseover
-        this.$container.mousemove(function (pixel) {
-          return _this5.handleMouseover(pixel);
-        });
+        this.container.addEventListener('mousemove', this.handleMousemove.bind(this));
       }
     }, {
-      key: "handleMouseover",
-      value: function handleMouseover(pixel) {
-        var _this6 = this;
-
-        // show the options
-        this.$container.addClass('active');
-        $('body').addClass('page-active');
-
-        if (this.mouseTimer) {
-          clearTimeout(this.mouseTimer);
-          this.mouseTimer = null;
-        }
-
-        this.mouseTimer = setTimeout(function () {
-          if (_this6.$optionsElem.length && _this6.$optionsElem.is(':hover')) {
-            return;
-          }
-
-          if (_this6.$chartDescription.length && _this6.$chartDescription.is(':hover')) {
-            return;
-          }
-
-          if (_this6.$pageSettings.length && _this6.$pageSettings.is(':hover')) {
-            return;
-          }
-
-          _this6.$container.removeClass('active');
-          $('body').removeClass('page-active');
-          _this6.$pageSettings.removeClass('open');
-        }, 1000);
+      key: "toggleType",
+      value: function toggleType() {
+        var options = _PageController.OPTIONS.type;
+        this.params.type = this.params.type === options[0] ? options[1] : options[0];
+        this.render();
+        this.pageController.updateURL();
+      }
+    }, {
+      key: "toggleRounding",
+      value: function toggleRounding() {
+        var options = _PageController.OPTIONS.rounding;
+        this.params.rounding = this.params.rounding === options[0] ? options[1] : options[0];
+        this.render();
+        this.pageController.updateURL();
+      }
+    }, {
+      key: "handleMousemove",
+      value: function handleMousemove(ev) {
+        // Show the options
+        _dom2.default.classlist.add(this.container, 'active');
+        _dom2.default.classlist.add(document.body, 'page-active');
 
         // don't change the selection if mouseover is below the plot
-        if (pixel.pageY - this.$plot.offset().top > this.$plot.height()) return;
+        var plotRect = _dom2.default.rect(this.plot);
+        if (ev.clientY - plotRect.top > plotRect.height) return;
 
         // update everything if the selextedX or focusedSeriesIndex is different
-        var closestPoint = this.getClosestPoint(pixel);
+        var closestPoint = this.getClosestPoint(ev);
         if (closestPoint.selectedX !== this.selectedX || closestPoint.focusedSeriesIndex !== this.focusedSeriesIndex) {
           this.selectedX = closestPoint.selectedX;
           this.focusedSeriesIndex = closestPoint.focusedSeriesIndex;
@@ -498,20 +507,21 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
       }
     }, {
       key: "getClosestPoint",
-      value: function getClosestPoint(pixel) {
-        var _this7 = this;
+      value: function getClosestPoint(ev) {
+        var _this5 = this;
 
-        var pixelX = (pixel.pageX - this.$plot.offset().left) * this.data.getIndexCount() / (this.width - this.margin.right);
-        var pixelY = pixel.pageY - this.$plot.offset().top;
+        var plotRect = _dom2.default.rect(this.plot);
+        var pixelX = (ev.clientX - plotRect.left) * this.data.getIndexCount() / (this.width - this.margin.right);
+        var pixelY = ev.clientY - plotRect.top;
         var currentX = Math.min(Math.floor(Math.max(pixelX, 0)), this.data.getIndexCount() - 1);
         var currentY = this.focusedSeriesIndex;
 
         // determine the closest y series
         var diffs = d3.range(this.data.getSeriesCount()).map(function (i) {
-          var thisDatum = _this7.data.getDatum(i, currentX);
-          var indexPixelY = _this7.params.type === 'line' ? _this7.yPosition(thisDatum) : _this7.yPositionStacked(thisDatum);
-          var diff = _this7.params.type === 'line' ? Math.abs(pixelY - indexPixelY) : pixelY - indexPixelY;
-          var isValid = _this7.params.type === 'line' || diff > 0;
+          var thisDatum = _this5.data.getDatum(i, currentX);
+          var indexPixelY = _this5.params.type === 'line' ? _this5.yPosition(thisDatum) : _this5.yPositionStacked(thisDatum);
+          var diff = _this5.params.type === 'line' ? Math.abs(pixelY - indexPixelY) : pixelY - indexPixelY;
+          var isValid = _this5.params.type === 'line' || diff > 0;
           return { diff: diff, series: i, isValid: isValid };
         });
 
@@ -539,7 +549,11 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
       key: "updatefocusedSeriesIndex",
       value: function updatefocusedSeriesIndex() {
         if (this.params.type === 'line') {
-          this.$container.find('.line').attr('class', 'line');
+          var lines = _dom2.default.queryAll('.line', this.container);
+          lines.forEach(function (line) {
+            return line.className = 'line';
+          });
+
           var selectedLine = d3.select(this.data.getSeries(this.focusedSeriesIndex).lineEl);
           selectedLine.attr('class', 'line focused');
           d3.select(selectedLine.node().parentNode).each(function () {
@@ -551,11 +565,6 @@ define(["exports", "./ChartData", "./ChartLegend", "../shared/utils", "./PageCon
       key: "getChartIndex",
       value: function getChartIndex() {
         return this.chartIndex;
-      }
-    }, {
-      key: "getChartContainer",
-      value: function getChartContainer() {
-        return this.$container;
       }
     }, {
       key: "getChartSeries",

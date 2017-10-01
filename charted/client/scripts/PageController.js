@@ -1,16 +1,20 @@
 "use strict";
 
-define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", "../shared/utils"], function (exports, _PageData, _Chart, _ChartParameters, _templates, _utils) {
+define(["exports", "./Actions", "./PageData", "./Chart", "./ChartParameters", "./dom", "./templates", "../shared/utils"], function (exports, _Actions, _PageData, _Chart, _ChartParameters, _dom, _templates, _utils) {
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
   exports.PageController = exports.OPTIONS = undefined;
+
+  var _Actions2 = _interopRequireDefault(_Actions);
 
   var _PageData2 = _interopRequireDefault(_PageData);
 
   var _Chart2 = _interopRequireDefault(_Chart);
 
   var _ChartParameters2 = _interopRequireDefault(_ChartParameters);
+
+  var _dom2 = _interopRequireDefault(_dom);
 
   var templates = _interopRequireWildcard(_templates);
 
@@ -76,31 +80,26 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
 
       _classCallCheck(this, PageController);
 
+      this.actions = new _Actions2.default(document.body);
       this.isEmbed = false;
       this.chartObjects = [];
-      this.$body = $('body');
-      this.$charts = $('.charts');
 
-      // re-render charts on window resize
-      $(window).resize(function () {
+      // Re-render charts on window resize
+      window.addEventListener('resize', function () {
         clearTimeout(_this.resizeTimer);
         _this.resizeTimer = setTimeout(function () {
           return _this.setDimensions();
         }, 30);
       });
 
-      // setup keystrokes
-      $(document).keyup(function (ev) {
-        if (ev.keyCode == 27) {
-          $('.overlay-container').remove();
-          $('.page-settings').removeClass('open');
-        }
-      });
+      var form = _dom2.default.get('js-loadDataForm');
+      if (!form) return;
 
-      $('.load-data-form').submit(function (ev) {
+      form.addEventListener('submit', function (ev) {
         ev.preventDefault();
 
-        var url = $('.data-file-input').val();
+        var input = _dom2.default.get('js-dataFileInput');
+        var url = input && input instanceof HTMLInputElement ? input.value : null;
         if (!url) {
           var err = 'You’ll need to paste in the URL to a .csv file or Google Spreadsheet first.';
           _this.errorNotify(new Error(err));
@@ -120,9 +119,11 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
         var chartId = path && path[2];
         var legacyParams = _ChartParameters2.default.fromQueryString(window.location.search || '');
 
+        this.actions.add('toggle-color', this.toggleColor, this).add('toggle-grid', this.toggleGrid, this).add('open-settings', this.openSettings, this).add('get-embed', this.getEmbed, this).add('close-embed', this.closeEmbed, this).add('update-data-source', this.updateDataSource, this).add('remove-popovers', this.removePopovers, this).activate();
+
         if (!chartId && !legacyParams) {
           this.clearExisting();
-          this.$body.addClass('pre-load');
+          _dom2.default.classlist.add(document.body, 'pre-load');
           return;
         }
 
@@ -175,13 +176,17 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
           id = utils.getChartId(this.params.compress());
         }
 
-        this.$body.addClass('loading');
+        _dom2.default.classlist.add(document.body, 'loading');
         this.updatePageTitle('Charted (...)');
         this.clearExisting();
 
         if (dataUrl) {
-          $('.data-file-input').val(dataUrl);
+          var input = _dom2.default.get('js-dataFileInput');
+          if (input && input instanceof HTMLInputElement) {
+            input.value = dataUrl;
+          }
         }
+
         var url = "/load/?url=" + encodeURIComponent(dataUrl || '') + "&id=" + encodeURIComponent(id || '');
         d3.json(url, function (err, resp) {
           if (err) {
@@ -215,7 +220,7 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
 
         // Set background color
         var color = this.params.isLight() ? 'light' : 'dark';
-        this.$body.addClass(color);
+        _dom2.default.classlist.add(document.body, color);
 
         // Set embed style
         this.applyEmbed();
@@ -227,7 +232,10 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
           this.params.charts[0].title = this.data.serieses.length > 1 ? 'Chart' : this.data.serieses[0].label;
         }
 
-        this.$body.removeClass('pre-load loading error');
+        var classes = ['pre-load', 'loading', 'error'];
+        classes.forEach(function (c) {
+          return _dom2.default.classlist.remove(document.body, c);
+        });
 
         // update charts
         this.params.charts.forEach(function (chart, i) {
@@ -236,53 +244,36 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
 
         this.setDimensions();
         this.updateURL();
-        $('.data-source-url').val(this.params.url);
+
+        this.setDataSourceUrl(this.params.url);
       }
     }, {
       key: "clearExisting",
       value: function clearExisting() {
-        $('.chart-wrapper, .page-settings').remove();
+        var charts = _dom2.default.getAll('js-chartWrapper');
+        charts.forEach(function (chart) {
+          return _dom2.default.remove(chart);
+        });
+        _dom2.default.remove(_dom2.default.get('js-settings'));
         this.chartObjects = [];
-        $('body, .settings, .settings-popover, .toggle-color').unbind();
       }
     }, {
       key: "setupPageSettings",
       value: function setupPageSettings() {
-        var _this5 = this;
-
-        // if this is an embed, don't add the page settings
+        // If this is an embed, don't add the page settings
         if (this.isEmbed) return;
 
-        // populate UI
-        this.$body.append(templates.pageSettings());
-        var $pageSettings = this.$body.find('.page-settings');
+        // Populate UI
+        var fragment = _dom2.default.renderFragment(templates.pageSettings());
+        document.body.appendChild(fragment);
 
-        $('.download-data').attr('href', this.params.url);
-        $('.data-source-url').val(this.params.url);
+        var url = this.params.url;
+        var link = _dom2.default.get('js-downloadDataLink');
+        if (link) {
+          link.setAttribute('href', url);
+        }
 
-        // bind intereactions
-        $pageSettings.find('.settings').click(function (event) {
-          event.stopPropagation();
-          $pageSettings.addClass('open');
-        });
-
-        $pageSettings.find('.settings-popover').click(function (event) {
-          return event.stopPropagation();
-        });
-
-        this.$body.click(function () {
-          return $pageSettings.removeClass('open');
-        });
-
-        $pageSettings.find('.toggle-color').click(function () {
-          return _this5.toggleColor();
-        });
-        $pageSettings.find('.get-embed').click(function () {
-          return _this5.getEmbed();
-        });
-        $pageSettings.find('.update-data-source').click(function () {
-          return _this5.fetchPageData($('.data-source-url').val(), /* id */null, _this5.params);
-        });
+        this.setDataSourceUrl(url);
       }
     }, {
       key: "updateChart",
@@ -321,23 +312,34 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
     }, {
       key: "createNewChart",
       value: function createNewChart(thisChartIndex, initialChartParams) {
-        var $el = $('<div class="chart-wrapper"></div>');
         var dimensions = this.getChartDimensions();
-        $el.outerHeight(dimensions.height).outerWidth(dimensions.width);
-        this.$charts.append($el);
-        this.chartObjects.push(new _Chart2.default(this, thisChartIndex, $el, initialChartParams, this.data));
+        var chart = document.createElement('div');
+
+        chart.style.height = dimensions.height + "px";
+        chart.style.width = dimensions.width + "px";
+
+        _dom2.default.classlist.add(chart, 'chart-wrapper');
+        _dom2.default.classlist.add(chart, 'js-chartWrapper');
+
+        var charts = _dom2.default.get('js-charts');
+        if (charts) {
+          charts.appendChild(chart);
+          var chartObject = new _Chart2.default(this, thisChartIndex, chart, initialChartParams, this.data);
+          chartObject.activate();
+          this.chartObjects.push(chartObject);
+        }
       }
     }, {
       key: "moveToChart",
       value: function moveToChart(series, fromChartIndex, toChartIndex) {
-        var _this6 = this;
+        var _this5 = this;
 
         var fromChart = this.params.charts[fromChartIndex];
         var toChart = this.params.charts[toChartIndex];
 
         // remove default titles
         this.params.charts.forEach(function (chart, i) {
-          if (chart.title && chart.title == _this6.getDefaultTitle(i)) {
+          if (chart.title && chart.title == _this5.getDefaultTitle(i)) {
             delete chart.title;
           }
         });
@@ -360,11 +362,6 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
         }
 
         this.updateChart(toChartIndex);
-
-        $('html, body').animate({
-          scrollTop: this.chartObjects[toChartIndex].$wrapper.offset().top
-        }, 300);
-
         this.updateChart(fromChartIndex);
 
         // update all charts that come after, since default titles may have changed
@@ -386,7 +383,8 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
 
         // remove the parameters, html element, and overall chart object
         this.params.charts.splice(chartIndex, 1);
-        this.chartObjects[chartIndex].$wrapper.remove();
+        _dom2.default.remove(this.chartObjects[chartIndex].wrapper);
+        this.chartObjects[chartIndex].deactivate();
         this.chartObjects.splice(chartIndex, 1);
       }
     }, {
@@ -432,11 +430,11 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
     }, {
       key: "getOtherCharts",
       value: function getOtherCharts(chartIndex) {
-        var _this7 = this;
+        var _this6 = this;
 
         return this.params.charts.map(function (chart, i) {
           return {
-            title: chart.title || _this7.getDefaultTitle(i),
+            title: chart.title || _this6.getDefaultTitle(i),
             chartIndex: i
           };
         }).filter(function (chart, i) {
@@ -454,11 +452,16 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
       key: "toggleColor",
       value: function toggleColor() {
         this.params.toggleColor();
-        this.$body.toggleClass('dark');
+        _dom2.default.classlist.toggle(document.body, 'dark');
         this.chartObjects.forEach(function (chart) {
           chart.render();
         });
         this.updateURL();
+      }
+    }, {
+      key: "openSettings",
+      value: function openSettings() {
+        _dom2.default.classlist.add(_dom2.default.get('js-settings'), 'open');
       }
     }, {
       key: "toggleGrid",
@@ -471,9 +474,7 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
     }, {
       key: "applyGrid",
       value: function applyGrid() {
-        var _this8 = this;
-
-        this.$body.toggleClass('full');
+        _dom2.default.classlist.toggle(document.body, 'full');
 
         var template = templates.gridSettingsFull;
         if (this.params && this.params.isFull()) {
@@ -481,10 +482,10 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
         }
 
         var chartCount = this.chartObjects ? this.chartObjects.length : 0;
-        $('.grid-option').html(chartCount > 1 ? template() : '');
-        $('.toggle-grid').click(function () {
-          return _this8.toggleGrid();
-        });
+        var container = _dom2.default.get('js-gridOption');
+        if (container && chartCount > 1) {
+          container.appendChild(_dom2.default.renderFragment(template()));
+        }
       }
     }, {
       key: "getEmbed",
@@ -492,22 +493,54 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
         var params = this.params.compress();
         var chartId = utils.getChartId(params);
 
-        this.$body.append(templates.embedOverlay(chartId));
-        this.$body.find('.overlay-content').click(function (ev) {
-          return ev.stopPropagation();
-        });
-        this.$body.click(function () {
-          return $('.overlay-container').remove();
-        });
+        var fragment = _dom2.default.renderFragment(templates.embedOverlay(chartId));
+        document.body.appendChild(fragment);
+      }
+    }, {
+      key: "closeEmbed",
+      value: function closeEmbed() {
+        var el = document.querySelector('.js-embedPopup');
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+      }
+    }, {
+      key: "updateDataSource",
+      value: function updateDataSource() {
+        var el = document.querySelector('.js-dataSourceUrl');
+
+        if (el && el instanceof HTMLInputElement) {
+          this.fetchPageData(el.value, /* id */null, this.params);
+        }
+      }
+    }, {
+      key: "setDataSourceUrl",
+      value: function setDataSourceUrl(url) {
+        var el = document.querySelector('.js-dataSourceUrl');
+        if (el && el instanceof HTMLInputElement) {
+          el.value = url;
+        }
       }
     }, {
       key: "applyEmbed",
       value: function applyEmbed() {
-        if (this.params.embed) {
-          this.$body.addClass('embed');
-        } else {
-          this.$body.removeClass('embed');
-        }
+        _dom2.default.classlist.enable(document.body, 'embed', this.isEmbed);
+      }
+    }, {
+      key: "removePopovers",
+      value: function removePopovers() {
+        // TODO: This probably shouldn't close the popover when
+        // the user clicks in empty space within the popover itself.
+        _dom2.default.classlist.remove(_dom2.default.get('js-settings'), 'open');
+
+        var legends = _dom2.default.getAll('js-legendItem');
+        legends.forEach(function (el) {
+          _dom2.default.classlist.remove(el, 'active');
+          _dom2.default.classlist.remove(el, 'active-color-input');
+        });
+
+        var selectors = ['js-moveChartOptions', 'js-changeSeriesColor'];
+        selectors.forEach(function (name) {
+          _dom2.default.remove(_dom2.default.get(name));
+        });
       }
     }, {
       key: "getEditability",
@@ -521,7 +554,7 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
         var minHeightForHalfHeight = 600;
         var minWidthForHalfWidth = 1200;
         var minWidthForFullHeight = 800;
-        var windowWidth = $(window).innerWidth();
+        var windowWidth = window.innerWidth;
         var windowHeight = 'innerHeight' in window ? window.innerHeight : document.documentElement.offsetHeight;
         var defaultHeight = windowWidth > minWidthForFullHeight ? windowHeight : 'auto';
         var chartCount = this.chartObjects ? this.chartObjects.length : 0;
@@ -543,24 +576,20 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
       key: "setDimensions",
       value: function setDimensions() {
         var dimensions = this.getChartDimensions();
-        if (dimensions.isGrid) {
-          this.$body.addClass('chart-grid');
-          this.$body.removeClass('half-height');
-        } else if (dimensions.isHalfHeight) {
-          this.$body.removeClass('chart-grid');
-          this.$body.addClass('half-height');
-        } else {
-          this.$body.removeClass('chart-grid half-height');
-        }
-        $('.chart-wrapper').outerHeight(dimensions.height).outerWidth(dimensions.width);
+
+        _dom2.default.classlist.enable(document.body, 'chart-grid', dimensions.isGrid);
+        _dom2.default.classlist.enable(document.body, 'half-height', dimensions.isHalfHeight);
+
+        _dom2.default.getAll('js-chartWrapper').forEach(function (wrapper) {
+          if (wrapper instanceof HTMLElement) {
+            wrapper.style.height = dimensions.height + "px";
+            wrapper.style.width = dimensions.width + "px";
+          }
+        });
 
         var bottomRowIndex = Math.floor((this.chartObjects.length - 1) / 2) * 2;
         this.chartObjects.forEach(function (chart, i) {
-          if (dimensions.isGrid && i >= bottomRowIndex) {
-            chart.$wrapper.addClass('bottom-row');
-          } else {
-            chart.$wrapper.removeClass('bottom-row');
-          }
+          _dom2.default.classlist.enable(chart.wrapper, 'bottom-row', dimensions.isGrid && i >= bottomRowIndex);
           chart.render();
         });
 
@@ -597,11 +626,16 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
     }, {
       key: "errorNotify",
       value: function errorNotify(error) {
-        this.$body.addClass('error').removeClass('loading');
+        _dom2.default.classlist.add(document.body, 'error');
+        _dom2.default.classlist.remove(document.body, 'loading');
+
         this.updatePageTitle();
         var displayMessage = error.message || error.responseText || 'There’s been an error. Please check that ' + 'you are using a valid .csv file. If you are using a Google Spreadsheet or Dropbox ' + 'link, the privacy setting must be set to shareable.';
 
-        $('.error-message').html(displayMessage);
+        var container = _dom2.default.get('js-errorMessage');
+        if (container) {
+          container.appendChild(_dom2.default.renderFragment(displayMessage));
+        }
       }
     }, {
       key: "updateURL",
@@ -620,7 +654,7 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
     }, {
       key: "updatePageTitle",
       value: function updatePageTitle(pageTitleString) {
-        var _this9 = this;
+        var _this7 = this;
 
         var pageTitle = 'Charted';
         var charts = [];
@@ -633,13 +667,13 @@ define(["exports", "./PageData", "./Chart", "./ChartParameters", "./templates", 
         } else if (charts.length > 0) {
           // if there's a chart, use the chart titles
           pageTitle = charts.map(function (chart, i) {
-            return chart.title || _this9.getDefaultTitle(i);
+            return chart.title || _this7.getDefaultTitle(i);
           }).join(', ');
 
           // if it's just one chart called "Chart", add the series names
           if (pageTitle === 'Chart') {
             pageTitle += ' of ' + charts[0].series.map(function (series) {
-              return _this9.getSeriesName(series);
+              return _this7.getSeriesName(series);
             }).join(', ');
           }
         }

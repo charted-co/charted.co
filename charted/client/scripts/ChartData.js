@@ -95,6 +95,26 @@ define(["exports", "../shared/utils", "./PageData"], function (exports, _utils, 
         return this._serieses[i];
       }
     }, {
+      key: "getSeriesByIndex",
+      value: function getSeriesByIndex(index) {
+        for (var i = 0; i < this._serieses.length; i++) {
+          if (this._serieses[i].seriesIndex == index) {
+            return this._serieses[i];
+          }
+        }
+      }
+    }, {
+      key: "getSeriesPositionByIndex",
+      value: function getSeriesPositionByIndex(index) {
+        for (var i = 0; i < this._serieses.length; i++) {
+          if (this._serieses[i].seriesIndex == index) {
+            return i;
+          }
+        }
+
+        return -1;
+      }
+    }, {
       key: "getDatum",
       value: function getDatum(seriesIndex, index) {
         return this._data[seriesIndex][index];

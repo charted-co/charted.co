@@ -12,14 +12,6 @@
 
       <script src="/lib.js"></script>
       <script src="/charted.js"></script>
-      <script>
-        requirejs(['scripts/PageController'], function (module) {
-          $(function () {
-            var pageController = new module.PageController()
-            pageController.activate()
-          })
-        })
-      </script>
 
     <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -34,7 +26,7 @@
 
   </head>
 
-  <body class="pre-load">
+  <body class="pre-load" data-click="remove-popovers">
     <h1 class="page-title">
         Charted
     </h1>
@@ -44,17 +36,17 @@
       <img class="loading-spinner-img" src="/images/spinner-dark.svg">
     </div>
 
-    <form class="load-data-form">
-      <input type="text" class="data-file-input" name="dataUrl"
+    <form class="load-data-form js-loadDataForm">
+      <input type="text" class="data-file-input js-dataFileInput" name="dataUrl"
         value="""
         placeholder="Paste the link to a .csv file or Google Spreadsheet">
 
       <button type="submit" class="submit">Go</button>
       <div class="loading-spinner"><img class="loading-spinner-img" src="/images/spinner.svg"></div>
-      <div class="error-message"></div>
+      <div class="error-message js-errorMessage"></div>
     </form>
 
-    <div class="charts"></div>
+    <div class="charts js-charts"></div>
 
     <footer>
       <a href="https://github.com/mikesall/charted">GitHub</a>
@@ -64,5 +56,12 @@
       <a href="https://medium.com/p/2ef03b3f429">Privacy</a>
 
     </footer>
+
+      <script>
+        requirejs(['scripts/PageController'], function (module) {
+          var pageController = new module.PageController()
+          pageController.activate()
+        })
+      </script>
   </body>
 </html>

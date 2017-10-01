@@ -21,14 +21,13 @@ $ cp -r out/ /path/to/charted.co/charted
 Verify:
 
 ```
-$ redis-server
-$ heroku local web
+$ npm start
 ```
 
 Deploy:
 
 ```
-$ git push heroku master
+$ gcloud app deploy
 ```
 
 ## Plugins

@@ -2,8 +2,7 @@
 
 define(["./PageController"], function (_PageController) {
 
-  $(function () {
-    var pageController = new _PageController.PageController();
-    pageController.activate();
-  });
+  window.__charted = new _PageController.PageController();
+
+  window.__charted.activate();
 });

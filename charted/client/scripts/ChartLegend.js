@@ -1,9 +1,11 @@
 "use strict";
 
-define(["exports", "./Chart", "./ChartData", "./PageController", "./Editor", "./templates"], function (exports, _Chart, _ChartData, _PageController, _Editor, _templates) {
+define(["exports", "./Actions", "./Chart", "./ChartData", "./PageController", "./Editor", "./templates", "./dom"], function (exports, _Actions, _Chart, _ChartData, _PageController, _Editor, _templates, _dom) {
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
+
+  var _Actions2 = _interopRequireDefault(_Actions);
 
   var _Chart2 = _interopRequireDefault(_Chart);
 
@@ -12,6 +14,8 @@ define(["exports", "./Chart", "./ChartData", "./PageController", "./Editor", "./
   var _Editor2 = _interopRequireDefault(_Editor);
 
   var templates = _interopRequireWildcard(_templates);
+
+  var _dom2 = _interopRequireDefault(_dom);
 
   function _interopRequireWildcard(obj) {
     if (obj && obj.__esModule) {
@@ -68,43 +72,71 @@ define(["exports", "./Chart", "./ChartData", "./PageController", "./Editor", "./
       this.controller = controller;
       this.data = data;
       this.chartIndex = this.chart.getChartIndex();
-      this.$container = this.chart.getChartContainer();
       this.series = this.chart.getChartSeries();
+      this.actions = new _Actions2.default(this.chart.container);
     }
 
     _createClass(ChartLegend, [{
+      key: "activate",
+      value: function activate() {
+        this.actions.add('open-color-input', this.openColorInput, this).add('open-move-chart', this.openMoveChart, this).add('move-to-chart', this.moveToChart, this).activate();
+      }
+    }, {
+      key: "deactivate",
+      value: function deactivate() {
+        this.actions.deactivate();
+        delete this.actions;
+      }
+    }, {
+      key: "getLegendElement",
+      value: function getLegendElement(index) {
+        var legend = _dom2.default.get("js-legendItem[data-series-index=\"" + index + "\"]");
+        if (legend) return legend;
+        throw "Legend item with index " + index + " not found";
+      }
+    }, {
       key: "update",
       value: function update() {
         var _this = this;
 
         if (this.data.getSeriesCount() === 1 && this.controller.getOtherCharts(this.chartIndex).length === 0) {
-          this.$container.find('.legend').html('');
+          var _legend = _dom2.default.get('js-legend', this.chart.container);
+          if (_legend) {
+            _legend.innerHTML = '';
+          }
           return;
         }
 
-        var $legend = $('');
+        var legend = document.createDocumentFragment();
         var serieses = this.data.getSerieses();
 
         for (var i = serieses.length - 1; i >= 0; i--) {
           var series = serieses[i];
           var label = this.controller.getSeriesName(this.series[i]);
-          var $legendEl = $(templates.legendItem({
+          var fragment = _dom2.default.renderFragment(templates.legendItem({
             label: label,
             color: this.chart.getSeriesColor(series.seriesIndex),
-            editable: this.controller.getEditability()
+            editable: this.controller.getEditability(),
+            seriesIndex: series.seriesIndex
           }));
 
-          $legend = $legend.add($legendEl);
-          series.legendEl = $legendEl;
+          legend.appendChild(fragment);
         }
 
-        this.$container.find('.legend').html($legend).removeClass('hidden');
+        var container = _dom2.default.get('js-legend', this.chart.container);
+        if (container) {
+          container.innerHTML = '';
+          container.appendChild(legend);
+          _dom2.default.classlist.remove(container, 'hidden');
+        }
 
         var seriesNames = this.controller.params.seriesNames;
         if (this.controller.getEditability()) {
           this.data.getSerieses().forEach(function (series) {
-            var el = series.legendEl.find('.js-legendLabel').get(0);
-            var ed = new _Editor2.default(el);
+            var label = _dom2.default.get('js-legendLabel', _this.getLegendElement(series.seriesIndex));
+            if (!label) throw "Legend label for legend " + series.seriesIndex + " not found";
+
+            var ed = new _Editor2.default(label);
             ed.onChange(function (content) {
               if (!content === '' || content === series.label) {
                 ed.setContent(series.label);
@@ -116,78 +148,57 @@ define(["exports", "./Chart", "./ChartData", "./PageController", "./Editor", "./
               _this.controller.updateURL();
             });
           });
-
-          this.bindLegendInteractions();
         }
       }
     }, {
-      key: "bindLegendInteractions",
-      value: function bindLegendInteractions() {
+      key: "openColorInput",
+      value: function openColorInput(target) {
         var _this2 = this;
 
-        this.data.getSerieses().forEach(function (series, i) {
-          // open color input
-          series.legendEl.find('.legend-color').click(function (event) {
-            event.stopPropagation();
-            _this2.removePopovers();
-            _this2.openColorInput(series);
-          });
+        this.controller.removePopovers();
+        var index = Number(target.getAttribute('data-series-index'));
+        var el = this.getLegendElement(index);
+        var colorHex = this.chart.getSeriesColor(index).replace(/^#/, '');
 
-          // open move-chart popover
-          series.legendEl.find('.move-chart').click(function (event) {
-            event.stopPropagation();
-            _this2.removePopovers();
-            _this2.openMoveChart(series, i);
-          });
-        });
-
-        // remove popovers
-        $('html').click(function () {
-          return _this2.removePopovers();
-        });
-      }
-    }, {
-      key: "openColorInput",
-      value: function openColorInput(series) {
-        var _this3 = this;
-
-        var colorHex = this.chart.getSeriesColor(series.seriesIndex).replace(/^#/, '');
-
-        series.legendEl.addClass('active-color-input');
-        series.legendEl.append(templates.changeSeriesColor({
+        _dom2.default.classlist.add(el, 'active-color-input');
+        var fragment = _dom2.default.renderFragment(templates.changeSeriesColor({
           colorHex: colorHex,
-          seriesIndex: series.seriesIndex
+          seriesIndex: index
         }));
+        el.appendChild(fragment);
 
-        this.data.getSeriesIndices().forEach(function (series) {
-          var $thisColorInput = _this3.$container.find('.change-series-color-' + series);
-          $thisColorInput.on('focusout', function () {
+        // TODO: Replace all this with Editor
+        var input = _dom2.default.assert(_dom2.default.get('js-colorEditor', el));
+        input.addEventListener('focusout', function () {
+          var seriesColors = _this2.controller.params.seriesColors;
+          var newColorHex = '';
+          if (input.innerText) {
+            newColorHex = '#' + input.innerText.replace(/^#/, '').trim();
+          }
 
-            var seriesColors = _this3.controller.params.seriesColors;
-            var newColorHex = '#' + $thisColorInput.text().replace(/^#/, '').trim();
+          var defaultColorHex = _this2.chart.getDefaulSeriesColor(index);
+          var isValidHex = /(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test(newColorHex);
 
-            var defaultColorHex = _this3.chart.getDefaulSeriesColor(series);
-            var isValidHex = /(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test(newColorHex);
-
-            if (newColorHex === defaultColorHex || !isValidHex) {
-              $thisColorInput.text(defaultColorHex);
-              delete seriesColors[series];
-            } else {
-              seriesColors[series] = newColorHex;
-            }
-            _this3.chart.render();
-            _this3.controller.updateURL();
-          });
-        });
-
-        this.$container.find('.change-series-color').click(function (e) {
-          return e.stopPropagation();
+          if (newColorHex === defaultColorHex || !isValidHex) {
+            input.innerHTML = defaultColorHex;
+            delete seriesColors[index];
+          } else {
+            seriesColors[index] = newColorHex;
+          }
+          _this2.chart.render();
+          _this2.controller.updateURL();
         });
       }
     }, {
       key: "openMoveChart",
-      value: function openMoveChart(series, i) {
-        var _this4 = this;
+      value: function openMoveChart(target) {
+        this.controller.removePopovers();
+        var index = Number(target.getAttribute('data-series-index'));
+        var series = this.data.getSeriesByIndex(index);
+        if (!series) throw "Series " + index + " not found";
+
+        var position = this.data.getSeriesPositionByIndex(index);
+        if (position < 0) throw "Series " + index + " not found";
 
         var otherCharts = this.controller.getOtherCharts(this.chartIndex);
 
@@ -196,33 +207,30 @@ define(["exports", "./Chart", "./ChartData", "./PageController", "./Editor", "./
 
         if (otherCharts.length === 0) {
           // if no other charts, move series to a new chart
-          this.controller.moveToChart(this.series[i], this.chartIndex, newChartIndex);
+          this.controller.moveToChart(this.series[position], this.chartIndex, newChartIndex);
         } else if (otherCharts.length === 1 && this.series.length === 1) {
           // if only one series and only one other chart, move series back into that chart
-          this.controller.moveToChart(this.series[i], this.chartIndex, otherCharts[0].chartIndex);
+          this.controller.moveToChart(this.series[position], this.chartIndex, otherCharts[0].chartIndex);
         } else {
           // else, show all the options in a popover
-          series.legendEl.addClass('active');
-          series.legendEl.append(templates.moveChart({ otherCharts: otherCharts, series: this.series }));
+          var el = this.getLegendElement(series.seriesIndex);
+          _dom2.default.classlist.add(el, 'active');
 
-          otherCharts.forEach(function (chart) {
-            _this4.$container.find('.move-to-chart-' + chart.chartIndex).click(function (e) {
-              e.preventDefault();
-              _this4.controller.moveToChart(_this4.series[i], _this4.chartIndex, chart.chartIndex);
-            });
-          });
-
-          this.$container.find('.move-to-new-chart').click(function () {
-            _this4.controller.moveToChart(_this4.series[i], _this4.chartIndex, newChartIndex);
-          });
+          el.appendChild(_dom2.default.renderFragment(templates.moveChart({
+            position: position,
+            otherCharts: otherCharts,
+            series: this.series,
+            newChartIndex: newChartIndex
+          })));
         }
       }
     }, {
-      key: "removePopovers",
-      value: function removePopovers() {
-        $('html').find('.move-chart-options, .change-series-color').remove();
-        $('html').find('.page-settings').removeClass('open');
-        $('html').find('.legend-item').removeClass('active active-color-input');
+      key: "moveToChart",
+      value: function moveToChart(target) {
+        var src = this.chartIndex;
+        var dest = Number(target.getAttribute('data-dest'));
+        var series = this.series[Number(target.getAttribute('data-position'))];
+        this.controller.moveToChart(series, src, dest);
       }
     }]);
 

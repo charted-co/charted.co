@@ -66,6 +66,7 @@ var ChartedServer = function () {
         var app = (0, _express2.default)();
         var charted = new ChartedServer(db, staticRoot);
 
+        app.enable('trust proxy');
         app.use(_bodyParser2.default.json());
         app.use(_express2.default.static(staticRoot));
         app.get('/c/:id', charted.getChart.bind(charted));
