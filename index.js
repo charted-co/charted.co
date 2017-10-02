@@ -27,7 +27,12 @@ let db = {
   }
 }
 
-ChartedServer.start(Number(process.env.PORT) || 5000, path.join(__dirname, 'node_modules', 'chartedjs', 'out', 'client'), db)
+const server = new ChartedServer()
+  .withPort(Number(process.env.PORT) || 5000)
+  .withStaticRoot(path.join(__dirname, 'node_modules', 'chartedjs', 'out', 'client'))
+  .withStore(db)
+  .withForceSSL()
+  .start()
   .then((server) => {
     let address = server.address
     console.log(`Running at ${address.address}:${address.port}`)
