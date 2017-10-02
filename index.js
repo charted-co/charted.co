@@ -19,8 +19,17 @@ let db = {
   set: function (key, data) {
     return new Promise((resolve, reject) => {
       key = datastore.key(['Chart', key])
+      const meta = Object.keys(data).reduce((meta, key) => {
+        meta.push({
+          name: key,
+          value: data[key],
+          excludeFromIndexes: true
+        })
 
-      datastore.upsert({key, data})
+        return meta
+      }, [])
+
+      datastore.upsert({key, data: meta})
         .then((entity) => resolve())
         .catch((err) => reject(err))
     })
