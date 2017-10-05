@@ -22,6 +22,6 @@
     "request": "^2.69.0",
     "shelljs": "0.5.x",
     "handlebars": "^4.0.5",
-    "chartedjs": "3.2.0"
+    "chartedjs": "3.2.2"
   }
 }
